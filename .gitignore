@@ -1,0 +1,10 @@
+# Ignore build files
+build/
+bin/
+
+# Ignore IDE files
+*GPATH
+*GRTAGS
+*GTAGS
+*.clang_complete
+*.el
