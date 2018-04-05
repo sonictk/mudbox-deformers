@@ -78,8 +78,9 @@ set(PLUGIN_ENTRY_POINT mudbox_deformers_main.cpp)
 set(PLUGIN_SOURCES
     mudbox_deformers_spherify_deformer.h
     mudbox_deformers_spherify_deformer.cpp
-    mudbox_deformers_main.h
-    ${PLUGIN_ENTRY_POINT})
+    mudbox_deformers_main.h)
+
+set_source_files_properties(${PLUGIN_SOURCES} PROPERTIES HEADER_FILE_ONLY TRUE)
 
 set(MUDBOX_LIBRARIES
     "${MUDBOX_SDK_ROOT}/lib/MudboxFramework.lib"
@@ -107,7 +108,7 @@ else()
         GL GLEW glfw3 dl X11 Xrandr Xi pthread Xinerama Xcursor Xxf86vm)
 endif()
 
-add_library(${PROJECT_NAME} SHARED ${PLUGIN_ENTRY_POINT})
+add_library(${PROJECT_NAME} SHARED ${PLUGIN_SOURCES} ${PLUGIN_ENTRY_POINT})
 target_link_libraries(${PROJECT_NAME} ${MUDBOX_LIBRARIES} ${OS_LIBRARIES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
