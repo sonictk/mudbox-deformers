@@ -15,7 +15,13 @@ using mudbox::NodeEventType;
 using mudbox::Geometry;
 using mudbox::AttributePointer;
 using mudbox::AttributeInstance;
-using mudbox::EventGate;
+using mudbox::aevent;
+
+
+globalVar const char SPHERIFY_DEFORMER_NAME[] = "SpherifyDeformer";
+
+/// This is used to keep track of how many deformers are in the scene.
+globalVar int NUM_OF_SPHERIFY_DEFORMER_NODES = 0;
 
 
 struct SpherifyDeformer : TreeNode
@@ -25,14 +31,17 @@ struct SpherifyDeformer : TreeNode
 	/// The display name of the node. May be translated according to language settings.
 	static const char *displayName;
 
-	aptr<Geometry> targetObj;
+	aptr<Geometry> targetMesh;
 
 	AttributeInstance<float> spherifyWeight;
 
-	EventGate runEvent;
-	EventGate deleteEvent;
+	aevent applyEvent;
+	aevent deleteEvent;
+	aevent resetEvent;
 
 	SpherifyDeformer();
+
+	void spherify();
 
 	/**
 	 * Overridden to provide the properties window for modifying the deformer attributes.
@@ -43,14 +52,8 @@ struct SpherifyDeformer : TreeNode
 	 */
 	virtual QWidget *CreatePropertiesWindow(QWidget *parent);
 
-	/**
-	 * Overriden to allow for setting display name of the node.
-	 *
-	 * @param displayName	The name to set.
-	 */
-	virtual void SetDisplayName(const QString &displayName);
-
 	virtual void OnNodeEvent(const Attribute &attribute, NodeEventType eventType);
+
 };
 
 
