@@ -41,7 +41,7 @@ struct SpherifyDeformer : TreeNode
 
 	SpherifyDeformer();
 
-	void spherify();
+	void spherifyCB();
 
 	/**
 	 * Overridden to provide the properties window for modifying the deformer attributes.

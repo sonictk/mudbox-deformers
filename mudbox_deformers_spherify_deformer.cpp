@@ -20,6 +20,8 @@ using mudbox::etPointerTargetDestroyed;
 using mudbox::etValueChanged;
 using mudbox::SubdivisionLevel;
 using mudbox::MeshChange;
+using mudbox::Vector;
+using mudbox::AxisAlignedBoundingBox;
 using std::malloc;
 using std::strlen;
 
@@ -103,7 +105,7 @@ QWidget *SpherifyDeformer::CreatePropertiesWindow(QWidget *parent)
 }
 
 
-void SpherifyDeformer::spherify()
+void SpherifyDeformer::spherifyCB()
 {
 	if (targetMesh == 0) {
 		Kernel()->Interface()->MessageBox(Interface::msgError,
@@ -112,12 +114,19 @@ void SpherifyDeformer::spherify()
 		return;
 	}
 
-	// TODO: (sonictk) Apply spherify operation
 	SubdivisionLevel *currentSubdivisionLevel = targetMesh->ActiveLevel();
-
 	unsigned int numOfVertices = currentSubdivisionLevel->VertexCount();
 
 	MeshChange *meshChanges = currentSubdivisionLevel->StartChange();
+
+	// TODO: (sonictk) Figure out why the mesh isn't updating real-time
+	AxisAlignedBoundingBox bBox = currentSubdivisionLevel->BoundingBox(false);
+	float bBoxMaxLength = bBox.Size();
+	for (unsigned int i=0; i < numOfVertices; ++i) {
+		Vector pos = currentSubdivisionLevel->VertexPosition(i);
+		pos.SetLength(bBoxMaxLength * spherifyWeight);
+		currentSubdivisionLevel->SetVertexPosition(i, pos);
+	}
 
 	currentSubdivisionLevel->EndChange();
 
@@ -145,7 +154,7 @@ void SpherifyDeformer::OnNodeEvent(const Attribute &attribute, NodeEventType eve
 
 	} else if (attribute == applyEvent && eventType == etEventTriggered) {
 		// TODO: (sonictk) Apply deformation as undoable command
-		spherify();
+		spherifyCB();
 
 	} else if (attribute == resetEvent && eventType == etEventTriggered) {
 		spherifyWeight = 1.0f;
