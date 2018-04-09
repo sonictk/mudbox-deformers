@@ -7,8 +7,20 @@
 # i.e. ``C:\Program Files\Autodesk\Mudbox 2018\plugins`` if you would like to be
 # able to use your plugins immediately after building.)
 
-cmake_minimum_required(VERSION 3.0.2)
+# Official Autodesk recommended compiler versions for Mudbox 2018
+# Windows is Windows 7 and Visual Studio 12
+# Mac OS is OSX 10.9.2 Xcode 6.1
+# Linux 2.6.32 GCC 4.4.6-3
+
+# Target for Mudbox 2019 PR and beyond
+# Windows 10 and Visual Studio 2015
+# Mac OSX 10.13.x  Xcode 9.x
+# Linux Centos 7.0 and  gcc 6.3.1 / glib 2.17
+
+cmake_minimum_required(VERSION 3.6.3)
 project(mudbox_deformers)
+
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/modules)
 
 if(MUDBOX_SDK_ROOT)
     message(STATUS "Using Mudbox SDK at: ${MUDBOX_SDK_ROOT}")
@@ -22,6 +34,7 @@ endif()
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(WINDOWS TRUE)
     set(MUDBOX_PLUGIN_EXTENSION ".mp")
+    set(VS_STARTUP_PROJECT "${PROJECT_NAME}")
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(LINUX TRUE)
     set(MUDBOX_PLUGIN_EXTENSION ".so")
@@ -71,6 +84,9 @@ elseif(MSVC)
     set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS} /opt:REF /opt:ICF")
 endif()
 
+# find_package(Qt4Macros REQUIRED)
+# qt4_wrap_cpp(MOC_SOURCES "${PROJECT_SOURCE_DIR}/mudbox_deformers_bend_deformer.h")
+
 # Unity build
 set(PLUGIN_ENTRY_POINT mudbox_deformers_main.cpp)
 
@@ -78,6 +94,8 @@ set(PLUGIN_ENTRY_POINT mudbox_deformers_main.cpp)
 set(PLUGIN_SOURCES
     mudbox_deformers_spherify_deformer.h
     mudbox_deformers_spherify_deformer.cpp
+    mudbox_deformers_bend_deformer.h
+    mudbox_deformers_bend_deformer.cpp
     mudbox_deformers_main.h)
 
 set_source_files_properties(${PLUGIN_SOURCES} PROPERTIES HEADER_FILE_ONLY TRUE)
@@ -108,7 +126,7 @@ else()
         GL GLEW glfw3 dl X11 Xrandr Xi pthread Xinerama Xcursor Xxf86vm)
 endif()
 
-add_library(${PROJECT_NAME} SHARED ${PLUGIN_SOURCES} ${PLUGIN_ENTRY_POINT})
+add_library(${PROJECT_NAME} SHARED ${MOC_SOURCES} ${PLUGIN_SOURCES} ${PLUGIN_ENTRY_POINT})
 target_link_libraries(${PROJECT_NAME} ${MUDBOX_LIBRARIES} ${OS_LIBRARIES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES

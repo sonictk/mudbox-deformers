@@ -7,15 +7,16 @@
 
 #include <Mudbox/mudbox.h>
 #include <QtGui/QWidget>
+#include <QtGui/QSlider>
 #include <QtCore/QString>
 
 using mudbox::TreeNode;
 using mudbox::Attribute;
 using mudbox::NodeEventType;
 using mudbox::Geometry;
-using mudbox::AttributePointer;
-using mudbox::AttributeInstance;
+using mudbox::aptr;
 using mudbox::aevent;
+using mudbox::afloatr;
 
 
 globalVar const char SPHERIFY_DEFORMER_NAME[] = "SpherifyDeformer";
@@ -28,12 +29,14 @@ struct SpherifyDeformer : TreeNode
 {
 	DECLARE_CLASS // NOTE: (sonictk) Required for Mudbox RTTI system.
 
+	static const float defaultWeight;
+
 	/// The display name of the node. May be translated according to language settings.
 	static const char *displayName;
 
 	aptr<Geometry> targetMesh;
 
-	AttributeInstance<float> spherifyWeight;
+	afloatr spherifyWeight;
 
 	aevent applyEvent;
 	aevent deleteEvent;
@@ -41,7 +44,7 @@ struct SpherifyDeformer : TreeNode
 
 	SpherifyDeformer();
 
-	void spherifyCB();
+	void spherifyCB(float weight);
 
 	/**
 	 * Overridden to provide the properties window for modifying the deformer attributes.
@@ -53,7 +56,6 @@ struct SpherifyDeformer : TreeNode
 	virtual QWidget *CreatePropertiesWindow(QWidget *parent);
 
 	virtual void OnNodeEvent(const Attribute &attribute, NodeEventType eventType);
-
 };
 
 

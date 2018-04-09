@@ -1,8 +1,7 @@
 /**
- * @file   mudbox_deformers_main.h
- * @brief
+ * @file		mudbox_deformers_main.h
+ * @brief		Contains the entry point for this plugin.
  */
-
 #ifndef MUDBOX_DEFORMERS_MAIN_H
 #define MUDBOX_DEFORMERS_MAIN_H
 
@@ -19,6 +18,7 @@
 
 // NOTE: (sonictk) Unity build
 #include "mudbox_deformers_spherify_deformer.cpp"
+#include "mudbox_deformers_bend_deformer.cpp"
 
 
 globalVar const char MUDBOX_DEFORMERS_PLUGIN_NAME[] = "Mudbox deformers";

@@ -22,6 +22,9 @@ using mudbox::SubdivisionLevel;
 using mudbox::MeshChange;
 using mudbox::Vector;
 using mudbox::AxisAlignedBoundingBox;
+using mudbox::Scene;
+using mudbox::Geometry;
+
 using std::malloc;
 using std::strlen;
 
@@ -30,6 +33,8 @@ using std::strlen;
 IMPLEMENT_CLASS(SpherifyDeformer, TreeNode, SPHERIFY_DEFORMER_NAME)
 
 const char *SpherifyDeformer::displayName = SPHERIFY_DEFORMER_NAME;
+
+const float SpherifyDeformer::defaultWeight = 0.0f;
 
 
 SpherifyDeformer::SpherifyDeformer() : Node(SPHERIFY_DEFORMER_NAME),
@@ -52,7 +57,11 @@ SpherifyDeformer::SpherifyDeformer() : Node(SPHERIFY_DEFORMER_NAME),
 	free(nodeName);
 
 	targetMesh.m_sNullString = QString("Select a mesh");
-	spherifyWeight = 1.0f;
+
+	Geometry *activeGeo = Kernel()->Scene()->ActiveGeometry();
+	targetMesh = activeGeo;
+
+	spherifyWeight.SetValue(defaultWeight);
 }
 
 
@@ -63,33 +72,13 @@ QWidget *SpherifyDeformer::CreatePropertiesWindow(QWidget *parent)
 	// TODO: (sonictk) Figure out why Mudbox keeps references to these widgets and
 	// where, since stack alloc crashes after widget closure
 	QVBoxLayout *mainLayout = new QVBoxLayout;
-	QHBoxLayout *btnLayout = new QHBoxLayout;
-
-	QLabel *weightLabel = new QLabel("Weight");
-	QGroupBox *grpSettings = new QGroupBox("Spherify settings");
-	QVBoxLayout *grpSettingsLayout = new QVBoxLayout;
-	QHBoxLayout *weightLayout = new QHBoxLayout;
-	QSlider *sliderWeight = new QSlider(Qt::Horizontal);
-	sliderWeight->setRange(0, 100);
-
 	QPushButton *closeBtn = new QPushButton("Close");
-
-	QWidget *widgetHolder = new QWidget;
-
-	propertiesWidget->setWindowTitle(DisplayName());
-
-	weightLayout->addWidget(weightLabel);
-	weightLayout->addWidget(sliderWeight);
-	grpSettingsLayout->addLayout(weightLayout);
-	grpSettings->setLayout(grpSettingsLayout);
-
-	btnLayout->addWidget(closeBtn);
-
-	mainLayout->addWidget(grpSettings);
-	mainLayout->addLayout(btnLayout);
 
 	// TODO: (sonictk) Figure out why without the widget holder, nothing shows up
 	// TODO: (sonictk) Figure out why there's blank space at the top of the widget
+	mainLayout->addWidget(closeBtn);
+
+	QWidget *widgetHolder = new QWidget;
 	widgetHolder->setLayout(mainLayout);
 
 	propertiesWidget->connect(closeBtn,
@@ -97,39 +86,38 @@ QWidget *SpherifyDeformer::CreatePropertiesWindow(QWidget *parent)
 							  propertiesWidget,
 							  SLOT(reject()));
 
+	propertiesWidget->setWindowTitle(DisplayName());
 	propertiesWidget->layout()->addWidget(widgetHolder);
-
 	propertiesWidget->show();
+	// TODO: (sonictk) Figure out why the mudbox widget attribute holder doesn't
+	// resize to its contents automatically
+	propertiesWidget->setMinimumHeight(propertiesWidget->height() + 50);
 
 	return propertiesWidget;
 }
 
 
-void SpherifyDeformer::spherifyCB()
+void SpherifyDeformer::spherifyCB(float weight)
 {
-	if (targetMesh == 0) {
-		Kernel()->Interface()->MessageBox(Interface::msgError,
-										  QString("Cannot apply deformation!"),
-										  QString("Please select a mesh first from the drop-down menu!"));
-		return;
-	}
-
 	SubdivisionLevel *currentSubdivisionLevel = targetMesh->ActiveLevel();
 	unsigned int numOfVertices = currentSubdivisionLevel->VertexCount();
 
-	MeshChange *meshChanges = currentSubdivisionLevel->StartChange();
-
 	// TODO: (sonictk) Figure out why the mesh isn't updating real-time
+	// TODO: (sonictk) Live update must take application into account
 	AxisAlignedBoundingBox bBox = currentSubdivisionLevel->BoundingBox(false);
 	float bBoxMaxLength = bBox.Size();
 	for (unsigned int i=0; i < numOfVertices; ++i) {
 		Vector pos = currentSubdivisionLevel->VertexPosition(i);
-		pos.SetLength(bBoxMaxLength * spherifyWeight);
+		pos.SetLength(bBoxMaxLength * weight);
 		currentSubdivisionLevel->SetVertexPosition(i, pos);
 	}
 
-	currentSubdivisionLevel->EndChange();
+	currentSubdivisionLevel->ApplyChanges(true);
+	currentSubdivisionLevel->ContentChanged();
+	currentSubdivisionLevel->RecalculateAdjacency();
+	currentSubdivisionLevel->RecalculateNormals();
 
+	Kernel()->ViewPort()->Redraw();
 	Kernel()->Interface()->RefreshUI();
 }
 
@@ -139,10 +127,21 @@ void SpherifyDeformer::OnNodeEvent(const Attribute &attribute, NodeEventType eve
 	if (attribute == spherifyWeight) {
 		switch (eventType) {
 		case etValueChanged: {
-			// TODO: (sonictk) Apply the deformation live and see the mesh change
-			Kernel()->Interface()->MessageBox(Interface::msgInformation,
-											  QString("Test"),
-											  QString("Test"));
+			float weight = spherifyWeight.Value();
+			if (areFloatsEqual(weight, 0.0f)) {
+				return;
+			}
+
+			// TODO: (sonictk) This check seems to be worthless
+			if (!targetMesh) {
+				Kernel()->Interface()->MessageBox(Interface::msgError,
+												  QString("Cannot apply deformation!"),
+												  QString("Please select a mesh first from the drop-down menu!"));
+				return;
+			}
+
+			spherifyCB(weight);
+
 			break;
 		}
 		case etPointerTargetDestroyed:
@@ -153,16 +152,16 @@ void SpherifyDeformer::OnNodeEvent(const Attribute &attribute, NodeEventType eve
 		}
 
 	} else if (attribute == applyEvent && eventType == etEventTriggered) {
-		// TODO: (sonictk) Apply deformation as undoable command
-		spherifyCB();
+		// TODO: (sonictk) Save results
+		Kernel()->Interface()->RefreshUI();
 
 	} else if (attribute == resetEvent && eventType == etEventTriggered) {
-		spherifyWeight = 1.0f;
+		// TODO: (sonictk) Undo results
+		spherifyWeight.SetValue(defaultWeight);
 		Kernel()->Interface()->RefreshUI();
 
 	} else if (attribute == deleteEvent && eventType == etEventTriggered) {
-		spherifyWeight = 0.0f;
-
+		// TODO: (sonictk) Undo results
 		// NOTE: (sonictk) Remove the node from the graph first otherwise children
 		// will have invalid sibling ptrs.
 		Kernel()->Scene()->RemoveChild(this);
