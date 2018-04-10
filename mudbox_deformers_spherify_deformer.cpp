@@ -116,6 +116,7 @@ void SpherifyDeformer::spherifyCB(float weight)
 	currentSubdivisionLevel->ContentChanged();
 	currentSubdivisionLevel->RecalculateAdjacency();
 	currentSubdivisionLevel->RecalculateNormals();
+	currentSubdivisionLevel->Modified.Trigger();
 
 	Kernel()->ViewPort()->Redraw();
 	Kernel()->Interface()->RefreshUI();

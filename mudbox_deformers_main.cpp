@@ -37,6 +37,7 @@ void initializer()
 											SpherifyDeformer::StaticClass(),
 											"Spherify");
 
+	// TODO: (sonictk) This isn't working since the subMenus size is 0 at init time
 	QMenu *meshMenu = Kernel()->Interface()->DropDownMenu(Interface::ddmMesh);
 	QList<QMenu *> subMenus = meshMenu->findChildren<QMenu *>();
 	QMenu *deformersMenu = NULL;

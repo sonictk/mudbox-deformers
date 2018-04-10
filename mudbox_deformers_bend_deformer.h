@@ -9,12 +9,13 @@
 #include <QtGui/QWidget>
 #include <QtCore/QString>
 
+#include <ssmath/ss_platform.h>
 
 globalVar const char BEND_DEFORMER_NAME[] = "BendDeformer";
 
 struct BendDeformer : public QWidget
 {
-	// Q_OBJECT // TODO: (sonictk) Need to get moc working
+	Q_OBJECT // TODO: (sonictk) Need to get moc working
 
 public:
 	static BendDeformer *existingWidget;

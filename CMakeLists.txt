@@ -31,10 +31,14 @@ else()
     message(FATAL_ERROR "Cannot find Mudbox SDK! Specify MUDBOX_SDK_ROOT to point to the directory!")
 endif()
 
+set(CMAKE_AUTOMOC ON)
+
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(WINDOWS TRUE)
     set(MUDBOX_PLUGIN_EXTENSION ".mp")
     set(VS_STARTUP_PROJECT "${PROJECT_NAME}")
+    set(QT_ROOT_DIR "C:\\Qt\\4.8.6")
+    set(QT_QMAKE_EXECUTABLE "${QT_ROOT_DIR}\\bin\\qmake.exe")
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(LINUX TRUE)
     set(MUDBOX_PLUGIN_EXTENSION ".so")
@@ -42,6 +46,8 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(MACOSX TRUE)
     set(MUDBOX_PLUGIN_EXTENSION ".dylib")
 endif()
+
+find_package(Qt4 4.8.6 REQUIRED QtGui QtCore)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 include_directories(
