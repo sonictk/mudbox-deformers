@@ -64,6 +64,8 @@ BendDeformer::~BendDeformer()
 
 void BendDeformer::bendCB(int weight)
 {
+	Kernel()->Interface()->HUDMessageShow("test");
+
 	float bendWeight = 1.0f / float(weight);
 
 	Geometry *activeGeo = Kernel()->Scene()->ActiveGeometry();
