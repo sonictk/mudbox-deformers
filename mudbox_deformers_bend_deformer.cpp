@@ -14,6 +14,7 @@ using mudbox::Kernel;
 using mudbox::Geometry;
 using mudbox::SubdivisionLevel;
 using mudbox::Interface;
+using mudbox::MeshRenderer;
 
 
 BendDeformer *BendDeformer::existingWidget = NULL;
@@ -38,6 +39,8 @@ BendDeformer::BendDeformer(QWidget *parent, Qt::WindowFlags flags) : QWidget(par
 
 	QPushButton *closeBtn = new QPushButton("Close");
 
+	QPushButton *testBtn = new QPushButton("Test");
+
 	weightLayout->addWidget(sliderLabel);
 	weightLayout->addWidget(sliderWeight);
 
@@ -46,12 +49,14 @@ BendDeformer::BendDeformer(QWidget *parent, Qt::WindowFlags flags) : QWidget(par
 
 	mainLayout->addWidget(settingsGrp);
 	mainLayout->addWidget(closeBtn);
+
+	mainLayout->addWidget(testBtn);
 	setLayout(mainLayout);
 
 	bool result = connect(closeBtn, SIGNAL(released()), this, SLOT(close()));
 	assert(result == true);
 
-	result = connect(sliderWeight, SIGNAL(valueChanged(int)), NULL, SLOT(BendDeformer::bendCB(int)));
+	result = connect(sliderWeight, SIGNAL(valueChanged(int)), this, SLOT(BendDeformer::bendCB(int)));
 	assert(result == true);
 }
 
@@ -87,13 +92,23 @@ void BendDeformer::bendCB(int weight)
 		activeSubdivLevel->SetVertexPosition(i, pos);
 	}
 
+	// NOTE: (sonictk) Propagate all changes across all subdivision levels.
 	activeSubdivLevel->ApplyChanges(true);
-	activeSubdivLevel->ContentChanged();
-	activeSubdivLevel->RecalculateAdjacency();
-	activeSubdivLevel->RecalculateNormals();
 
+	// NOTE: (sonictk) Mark the mesh components dirty and notify all the renderers
+	// to redraw the mesh.
+	MeshRenderer *renderer;
+	for (unsigned int i=0; renderer = activeSubdivLevel->ChildByClass<MeshRenderer>(i); ++i) {
+		for (unsigned int f=0; f < activeSubdivLevel->FaceCount(); ++f) {
+			for (int j=0; j < 4; ++j) {
+				renderer->OnVertexPositionChange(activeSubdivLevel->QuadIndex(f, j), f);
+			}
+		}
+	}
+
+	// NOTE: (sonictk) Still need to refresh the viewport after the renderers
+	// have been notified.
 	Kernel()->ViewPort()->Redraw();
-	Kernel()->Interface()->RefreshUI();
 }
 
 

@@ -28,7 +28,7 @@ void initializer()
 	// TODO: (sonictk) Get the version of mudbox being used and modify the
 	// initialization accordingly since the signature here changes
 	Kernel()->Interface()->AddCallbackMenuItem(Interface::menuMesh,
-											   QString(deformersMenuName) + "_test",
+											   QString(deformersMenuName),
 											   QString("Bend"),
 											   showBendDeformerUI);
 
@@ -36,23 +36,4 @@ void initializer()
 											deformersMenuNameQS,
 											SpherifyDeformer::StaticClass(),
 											"Spherify");
-
-	// TODO: (sonictk) This isn't working since the subMenus size is 0 at init time
-	QMenu *meshMenu = Kernel()->Interface()->DropDownMenu(Interface::ddmMesh);
-	QList<QMenu *> subMenus = meshMenu->findChildren<QMenu *>();
-	QMenu *deformersMenu = NULL;
-	for (int i=0; i < subMenus.size(); ++i) {
-		QMenu *curMenu = subMenus[i];
-		if (curMenu->title() == deformersMenuNameQS) {
-			deformersMenu = curMenu;
-			break;
-		}
-	}
-
-	if (!deformersMenu) {
-		return;
-	}
-
-	deformersMenu->addAction(QString("Test action"));
-
 }

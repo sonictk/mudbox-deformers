@@ -1,5 +1,5 @@
-#include "mudbox_deformers_spherify_deformer.h"
 #include <ssmath/ss_common_math.h>
+#include "mudbox_deformers_spherify_deformer.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -10,20 +10,21 @@
 #include <QtGui/QSlider>
 #include <QtGui/QVBoxLayout>
 #include <QtGui/QLabel>
+#include <QtGui/QMessageBox>
 
+using mudbox::AxisAlignedBoundingBox;
 using mudbox::Interface;
 using mudbox::Kernel;
 using mudbox::Mesh;
+using mudbox::MeshChange;
+using mudbox::MeshRenderer;
 using mudbox::Node;
+using mudbox::Scene;
+using mudbox::SubdivisionLevel;
 using mudbox::etEventTriggered;
+using mudbox::etPointerContentChanged;
 using mudbox::etPointerTargetDestroyed;
 using mudbox::etValueChanged;
-using mudbox::SubdivisionLevel;
-using mudbox::MeshChange;
-using mudbox::Vector;
-using mudbox::AxisAlignedBoundingBox;
-using mudbox::Scene;
-using mudbox::Geometry;
 
 using std::malloc;
 using std::strlen;
@@ -102,32 +103,67 @@ void SpherifyDeformer::spherifyCB(float weight)
 	SubdivisionLevel *currentSubdivisionLevel = targetMesh->ActiveLevel();
 	unsigned int numOfVertices = currentSubdivisionLevel->VertexCount();
 
-	// TODO: (sonictk) Figure out why the mesh isn't updating real-time
-	// TODO: (sonictk) Live update must take application into account
-	AxisAlignedBoundingBox bBox = currentSubdivisionLevel->BoundingBox(false);
-	float bBoxMaxLength = bBox.Size();
+	if (numOfVertices != (unsigned int)origPtPositions.size()) {
+		QMessageBox::critical(Kernel()->Interface()->MainWindow(),
+							  "Failed to apply spherify operation!",
+							  "The mesh in memory and the current mesh do not "
+							  "have the same number of vertices! Please make sure that you're on the same subdivision level that you started the operation with!");
+
+		return;
+	}
+
 	for (unsigned int i=0; i < numOfVertices; ++i) {
-		Vector pos = currentSubdivisionLevel->VertexPosition(i);
-		pos.SetLength(bBoxMaxLength * weight);
-		currentSubdivisionLevel->SetVertexPosition(i, pos);
+		Vector origPos = origPtPositions[i];
+		Vector newPos = Vector(origPos);
+		newPos.SetLength(origBBoxMaxLength);
+		Vector finalPos = lerp(origPos, newPos, weight);
+		currentSubdivisionLevel->SetVertexPosition(i, finalPos);
 	}
 
 	currentSubdivisionLevel->ApplyChanges(true);
-	currentSubdivisionLevel->ContentChanged();
-	currentSubdivisionLevel->RecalculateAdjacency();
-	currentSubdivisionLevel->RecalculateNormals();
-	currentSubdivisionLevel->Modified.Trigger();
+
+	// NOTE: (sonictk) Mark the mesh components dirty and notify all the renderers
+	// to redraw the mesh
+	MeshRenderer *renderer;
+	for (unsigned int i=0; renderer = currentSubdivisionLevel->ChildByClass<MeshRenderer>(i); ++i) {
+		for (unsigned int f=0; f < currentSubdivisionLevel->FaceCount(); ++f) {
+			for (int j=0; j < 4; ++j) {
+				renderer->OnVertexPositionChange(currentSubdivisionLevel->QuadIndex(f, j), f);
+			}
+		}
+	}
 
 	Kernel()->ViewPort()->Redraw();
-	Kernel()->Interface()->RefreshUI();
 }
 
 
 void SpherifyDeformer::OnNodeEvent(const Attribute &attribute, NodeEventType eventType)
 {
-	if (attribute == spherifyWeight) {
+	if (attribute == targetMesh) {
+		if (eventType == etPointerTargetDestroyed) {
+			origPtPositions.clear();
+			origBBoxMaxLength = 0.0f;
+
+			return;
+		}
+
+		SubdivisionLevel *currentSubdivisionLevel = targetMesh->ActiveLevel();
+		AxisAlignedBoundingBox bBox = currentSubdivisionLevel->BoundingBox(false);
+		unsigned int numOfVertices = currentSubdivisionLevel->VertexCount();
+
+		origPtPositions.clear();
+
+		for (unsigned int i=0; i < numOfVertices; ++i) {
+			Vector pos = currentSubdivisionLevel->VertexPosition(i);
+			origPtPositions.push_back(pos);
+		}
+
+		origBBoxMaxLength = bBox.Size();
+
+	} else if (attribute == spherifyWeight) {
 		switch (eventType) {
 		case etValueChanged: {
+
 			float weight = spherifyWeight.Value();
 			if (areFloatsEqual(weight, 0.0f)) {
 				return;
@@ -153,21 +189,84 @@ void SpherifyDeformer::OnNodeEvent(const Attribute &attribute, NodeEventType eve
 		}
 
 	} else if (attribute == applyEvent && eventType == etEventTriggered) {
-		// TODO: (sonictk) Save results
-		Kernel()->Interface()->RefreshUI();
+		SubdivisionLevel *currentSubdivisionLevel = targetMesh->ActiveLevel();
+		currentSubdivisionLevel->RecalculateAdjacency();
+		currentSubdivisionLevel->RecalculateNormals();
 
 	} else if (attribute == resetEvent && eventType == etEventTriggered) {
-		// TODO: (sonictk) Undo results
+		// SubdivisionLevel *currentSubdivisionLevel = targetMesh->ActiveLevel();
+		// unsigned int numOfVertices = currentSubdivisionLevel->VertexCount();
+
+		// if (numOfVertices != (unsigned int)origPtPositions.size()) {
+		// 	QMessageBox::critical(Kernel()->Interface()->MainWindow(),
+		// 						  "Failed to apply spherify operation!",
+		// 						  "The mesh in memory and the current mesh do not "
+		// 						  "have the same number of vertices! Please make sure that you're on the same subdivision level that you started the operation with!");
+
+		// 	return;
+		// }
+
+		// for (unsigned int i=0; i < numOfVertices; ++i) {
+		// 	Vector origPos = origPtPositions[i];
+		// 	currentSubdivisionLevel->SetVertexPosition(i, origPos);
+		// }
+
+		// currentSubdivisionLevel->ApplyChanges(true);
+		// currentSubdivisionLevel->RecalculateAdjacency();
+		// currentSubdivisionLevel->RecalculateNormals();
+
+		// // NOTE: (sonictk) Mark the mesh components dirty and notify all the renderers
+		// // to redraw the mesh
+		// MeshRenderer *renderer;
+		// for (unsigned int i=0; renderer = currentSubdivisionLevel->ChildByClass<MeshRenderer>(i); ++i) {
+		// 	for (unsigned int f=0; f < currentSubdivisionLevel->FaceCount(); ++f) {
+		// 		for (int j=0; j < 4; ++j) {
+		// 			renderer->OnVertexPositionChange(currentSubdivisionLevel->QuadIndex(f, j), f);
+		// 		}
+		// 	}
+		// }
+		// Kernel()->ViewPort()->Redraw();
+
 		spherifyWeight.SetValue(defaultWeight);
-		Kernel()->Interface()->RefreshUI();
 
 	} else if (attribute == deleteEvent && eventType == etEventTriggered) {
-		// TODO: (sonictk) Undo results
+		// TODO: (sonictk) Undo results without triggering a crash
+		// SubdivisionLevel *currentSubdivisionLevel = targetMesh->ActiveLevel();
+		// unsigned int numOfVertices = currentSubdivisionLevel->VertexCount();
+
+		// if (numOfVertices != (unsigned int)origPtPositions.size()) {
+		// 	QMessageBox::critical(Kernel()->Interface()->MainWindow(),
+		// 						  "Failed to apply spherify operation!",
+		// 						  "The mesh in memory and the current mesh do not "
+		// 						  "have the same number of vertices! Please make sure that you're on the same subdivision level that you started the operation with!");
+
+		// 	return;
+		// }
+
+		// for (unsigned int i=0; i < numOfVertices; ++i) {
+		// 	Vector origPos = origPtPositions[i];
+		// 	currentSubdivisionLevel->SetVertexPosition(i, origPos);
+		// }
+
+		// currentSubdivisionLevel->ApplyChanges(true);
+
+		// // NOTE: (sonictk) Mark the mesh components dirty and notify all the renderers
+		// // to redraw the mesh
+		// MeshRenderer *renderer;
+		// for (unsigned int i=0; renderer = currentSubdivisionLevel->ChildByClass<MeshRenderer>(i); ++i) {
+		// 	for (unsigned int f=0; f < currentSubdivisionLevel->FaceCount(); ++f) {
+		// 		for (int j=0; j < 4; ++j) {
+		// 			renderer->OnVertexPositionChange(currentSubdivisionLevel->QuadIndex(f, j), f);
+		// 		}
+		// 	}
+		// }
+
+		// Kernel()->ViewPort()->Redraw();
+
 		// NOTE: (sonictk) Remove the node from the graph first otherwise children
 		// will have invalid sibling ptrs.
-		Kernel()->Scene()->RemoveChild(this);
-		Kernel()->Interface()->RefreshUI();
+		// Kernel()->Scene()->RemoveChild(this);
 
-		delete this;
+		// delete this;
 	}
 }

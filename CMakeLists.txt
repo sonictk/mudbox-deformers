@@ -16,6 +16,7 @@
 # Windows 10 and Visual Studio 2015
 # Mac OSX 10.13.x  Xcode 9.x
 # Linux Centos 7.0 and  gcc 6.3.1 / glib 2.17
+# Qt 5 being targeted for EOY 2018
 
 cmake_minimum_required(VERSION 3.6.3)
 project(mudbox_deformers)
@@ -31,6 +32,8 @@ else()
     message(FATAL_ERROR "Cannot find Mudbox SDK! Specify MUDBOX_SDK_ROOT to point to the directory!")
 endif()
 
+# NOTE: (sonictk) Relying on system-installed Qt here. Eventually need to wrap
+# the Mudbox ones since I have multiple versions of Qt installed.
 set(CMAKE_AUTOMOC ON)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -73,16 +76,16 @@ elseif(MSVC)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} /Zi /Od /MDd")
 
     add_definitions(-DWIN32
-        -DNDEBUG
-        -DWINDOWS
-        -D_USRDLL
-        -DCAMERASHOTS_EXPORTS
-        -DMB_USE_QT
-        -D_WINDLL
-        -D_UNICODE
-        -DUNICODE)
+                    -DNDEBUG
+                    -DWINDOWS
+                    -D_USRDLL
+                    -DCAMERASHOTS_EXPORTS
+                    -DMB_USE_QT
+                    -D_WINDLL
+                    -D_UNICODE
+                    -DUNICODE)
 
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /nologo /subsystem:windows /manifest /dynamicbase:no /dll /machine:X64 /manifestuac:"level=asInvoker uiAccess=false" /errorReport:none /tlbid:1")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /nologo /subsystem:windows /manifest /dynamicbase:no /dll /machine:X64 /errorReport:none /tlbid:1")
     set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS} /debug")
 
     # NOTE: (sonictk) Turn on link optimizations for eliminating unreferenced

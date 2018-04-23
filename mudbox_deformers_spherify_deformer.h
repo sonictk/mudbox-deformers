@@ -10,13 +10,18 @@
 #include <QtGui/QSlider>
 #include <QtCore/QString>
 
-using mudbox::TreeNode;
+#include <vector>
+
 using mudbox::Attribute;
-using mudbox::NodeEventType;
 using mudbox::Geometry;
-using mudbox::aptr;
+using mudbox::NodeEventType;
+using mudbox::TreeNode;
+using mudbox::Vector;
 using mudbox::aevent;
 using mudbox::afloatr;
+using mudbox::aptr;
+
+using std::vector;
 
 
 globalVar const char SPHERIFY_DEFORMER_NAME[] = "SpherifyDeformer";
@@ -36,14 +41,28 @@ struct SpherifyDeformer : TreeNode
 
 	aptr<Geometry> targetMesh;
 
+	vector<Vector> origPtPositions;
+	float origBBoxMaxLength;
+
 	afloatr spherifyWeight;
 
 	aevent applyEvent;
 	aevent deleteEvent;
 	aevent resetEvent;
 
+	/**
+	 * The constructor. Creates the UI and sets up default values.
+	 *
+	 * @return		A new instance of the deformer class.
+	 */
 	SpherifyDeformer();
 
+	/**
+	 * This callback is executed when the weight slider's value is changed. It is
+	 * responsible for applying the spherify operation to the mesh.
+	 *
+	 * @param weight	The amount of spherification to apply.
+	 */
 	void spherifyCB(float weight);
 
 	/**

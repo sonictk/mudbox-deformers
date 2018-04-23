@@ -18,6 +18,7 @@ struct BendDeformer : public QWidget
 	Q_OBJECT
 
 public:
+	/// Global variable that holds reference to the UI that is already open.
 	static BendDeformer *existingWidget;
 
 	static const QString objName;
@@ -26,8 +27,8 @@ public:
 
 	~BendDeformer();
 
+public slots:
 	void bendCB(int weight);
-
 };
 
 
