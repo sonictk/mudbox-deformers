@@ -101,6 +101,8 @@ set(PLUGIN_ENTRY_POINT mudbox_deformers_main.cpp)
 
 # This allows CMake to expose sources to IDEs when generating projects for them (e.g. VS or XCode)
 set(PLUGIN_SOURCES
+    mudbox_deformers_util.h
+    mudbox_deformers_util.cpp
     mudbox_deformers_spherify_deformer.h
     mudbox_deformers_spherify_deformer.cpp
     mudbox_deformers_bend_deformer.h

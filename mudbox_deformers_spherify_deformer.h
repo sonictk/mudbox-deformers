@@ -39,9 +39,13 @@ struct SpherifyDeformer : TreeNode
 	/// The display name of the node. May be translated according to language settings.
 	static const char *displayName;
 
+	/// The mesh selector combobox.
 	aptr<Geometry> targetMesh;
 
+	/// Internal storage used for the original mesh positions.
 	vector<Vector> origPtPositions;
+
+	/// Internal storage for the original max. edge length of the mesh bounding box.
 	float origBBoxMaxLength;
 
 	afloatr spherifyWeight;
@@ -56,6 +60,12 @@ struct SpherifyDeformer : TreeNode
 	 * @return		A new instance of the deformer class.
 	 */
 	SpherifyDeformer();
+
+	/**
+	 * This updates the internal cache with the original positions of the mesh.
+	 * It is used for blending the spherify weights against the original mesh.
+	 */
+	void updateOriginalPointPositions();
 
 	/**
 	 * This callback is executed when the weight slider's value is changed. It is

@@ -17,6 +17,7 @@
 #endif // MessageBox
 
 // NOTE: (sonictk) Unity build
+#include "mudbox_deformers_util.cpp"
 #include "mudbox_deformers_spherify_deformer.cpp"
 #include "mudbox_deformers_bend_deformer.cpp"
 

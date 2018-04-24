@@ -23,7 +23,6 @@ MB_PLUGIN(MUDBOX_DEFORMERS_PLUGIN_NAME,
 void initializer()
 {
 	const char deformersMenuName[] = "Deformers";
-	const QString deformersMenuNameQS = QString(deformersMenuName);
 
 	// TODO: (sonictk) Get the version of mudbox being used and modify the
 	// initialization accordingly since the signature here changes
@@ -33,7 +32,7 @@ void initializer()
 											   showBendDeformerUI);
 
 	Kernel()->Interface()->AddClassMenuItem(Interface::menuMesh,
-											deformersMenuNameQS,
+											QString(deformersMenuName),
 											SpherifyDeformer::StaticClass(),
 											"Spherify");
 }
