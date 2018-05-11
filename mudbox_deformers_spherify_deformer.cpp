@@ -66,6 +66,11 @@ SpherifyDeformer::SpherifyDeformer() : Node(SPHERIFY_DEFORMER_NAME),
 	updateOriginalPointPositions();
 
 	spherifyWeight.SetValue(defaultWeight);
+
+	// NOTE: (sonictk) Connect the scene member event to the global one so that
+	// we can catch the deletion event of the target mesh if it happens and delete
+	// this node as well
+	sceneEvent.Connect(Kernel()->Scene()->SceneMembershipEvent);
 }
 
 
@@ -149,6 +154,11 @@ void SpherifyDeformer::spherifyCB(float weight)
 
 void SpherifyDeformer::OnNodeEvent(const Attribute &attribute, NodeEventType eventType)
 {
+	// TODO: (sonictk) Figure out how to get this callback working
+	if (attribute == sceneEvent) {
+		Kernel()->Interface()->HUDMessageShow("test");
+	}
+
 	if (attribute == targetMesh) {
 		switch (eventType) {
 

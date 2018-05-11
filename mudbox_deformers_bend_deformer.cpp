@@ -9,7 +9,6 @@
 #include <QtGui/QWidget>
 #include <QtGui/QPushButton>
 
-
 using mudbox::Kernel;
 using mudbox::Geometry;
 using mudbox::SubdivisionLevel;
@@ -56,7 +55,7 @@ BendDeformer::BendDeformer(QWidget *parent, Qt::WindowFlags flags) : QWidget(par
 	bool result = connect(closeBtn, SIGNAL(released()), this, SLOT(close()));
 	assert(result == true);
 
-	result = connect(sliderWeight, SIGNAL(valueChanged(int)), this, SLOT(BendDeformer::bendCB(int)));
+	result = connect(sliderWeight, SIGNAL(valueChanged(int)), this, SLOT(bendCB(int)));
 	assert(result == true);
 }
 

@@ -15,6 +15,7 @@
 using mudbox::Attribute;
 using mudbox::Geometry;
 using mudbox::NodeEventType;
+using mudbox::SceneMembershipEventNotifier;
 using mudbox::TreeNode;
 using mudbox::Vector;
 using mudbox::aevent;
@@ -41,6 +42,10 @@ struct SpherifyDeformer : TreeNode
 
 	/// The mesh selector combobox.
 	aptr<Geometry> targetMesh;
+
+	/// Used for detecting when the mesh that this deformer is associated with is
+	/// deleted; cleanup of this node is performed at the same time.
+	aptr<SceneMembershipEventNotifier> sceneEvent;
 
 	/// Internal storage used for the original mesh positions.
 	vector<Vector> origPtPositions;

@@ -9,7 +9,9 @@
 #include <QtCore/QString>
 
 // NOTE: (sonictk) This is after the mudbox headers since some defines will clash otherwise
+#ifndef SS_PLATFORM_LEAN
 #define SS_PLATFORM_LEAN
+#endif // SS_PLATFORM_LEAN
 #include <ssmath/ss_platform.h>
 
 #ifdef MessageBox

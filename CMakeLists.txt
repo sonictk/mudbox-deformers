@@ -32,10 +32,6 @@ else()
     message(FATAL_ERROR "Cannot find Mudbox SDK! Specify MUDBOX_SDK_ROOT to point to the directory!")
 endif()
 
-# NOTE: (sonictk) Relying on system-installed Qt here. Eventually need to wrap
-# the Mudbox ones since I have multiple versions of Qt installed.
-set(CMAKE_AUTOMOC ON)
-
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(WINDOWS TRUE)
     set(MUDBOX_PLUGIN_EXTENSION ".mp")
@@ -50,6 +46,9 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(MUDBOX_PLUGIN_EXTENSION ".dylib")
 endif()
 
+# NOTE: (sonictk) Relying on system-installed Qt here. Eventually need to wrap
+# the Mudbox ones since I have multiple versions of Qt installed.
+set(CMAKE_AUTOMOC ON)
 find_package(Qt4 4.8.6 REQUIRED QtGui QtCore)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -93,9 +92,6 @@ elseif(MSVC)
     set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS} /opt:REF /opt:ICF")
 endif()
 
-# find_package(Qt4Macros REQUIRED)
-# qt4_wrap_cpp(MOC_SOURCES "${PROJECT_SOURCE_DIR}/mudbox_deformers_bend_deformer.h")
-
 # Unity build
 set(PLUGIN_ENTRY_POINT mudbox_deformers_main.cpp)
 
@@ -137,7 +133,12 @@ else()
         GL GLEW glfw3 dl X11 Xrandr Xi pthread Xinerama Xcursor Xxf86vm)
 endif()
 
+# find_package(Qt4Macros REQUIRED)
+# qt_wrap_cpp(${PROJECT_NAME} MOC_SOURCES "${PROJECT_SOURCE_DIR}/mudbox_deformers_bend_deformer.h")
+
+# add_library(${PROJECT_NAME} SHARED ${MOC_SOURCES} ${PLUGIN_SOURCES} ${PLUGIN_ENTRY_POINT})
 add_library(${PROJECT_NAME} SHARED ${MOC_SOURCES} ${PLUGIN_SOURCES} ${PLUGIN_ENTRY_POINT})
+
 target_link_libraries(${PROJECT_NAME} ${MUDBOX_LIBRARIES} ${OS_LIBRARIES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
