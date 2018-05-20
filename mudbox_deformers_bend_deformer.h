@@ -9,9 +9,7 @@
 #include <QtGui/QWidget>
 #include <QtCore/QString>
 
-#include <ssmath/ss_platform.h>
-
-globalVar const char BEND_DEFORMER_NAME[] = "BendDeformer";
+static const char BEND_DEFORMER_NAME[] = "BendDeformer";
 
 struct BendDeformer : public QWidget
 {

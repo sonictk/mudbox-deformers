@@ -26,13 +26,18 @@ void initializer()
 
 	// TODO: (sonictk) Get the version of mudbox being used and modify the
 	// initialization accordingly since the signature here changes
-	Kernel()->Interface()->AddCallbackMenuItem(Interface::menuMesh,
-											   QString(deformersMenuName),
-											   QString("Bend"),
+	Kernel()->Interface()->AddCallbackMenuItem(deformersMenuName,
+											   "Bend",
+											   "Bend mesh",
 											   showBendDeformerUI);
 
-	Kernel()->Interface()->AddClassMenuItem(Interface::menuMesh,
-											QString(deformersMenuName),
+	// Kernel()->Interface()->AddCallbackMenuItem(Interface::menuMesh,
+	// 										   QString(deformersMenuName),
+	// 										   QString("Spherify"),
+	// 										   showSpherifyDeformerUI);
+
+	Kernel()->Interface()->AddClassMenuItem(deformersMenuName,
+											"Spherify",
 											SpherifyDeformer::StaticClass(),
-											"Spherify");
+											"New Spherify Operation");
 }

@@ -8,10 +8,6 @@
 #include <Mudbox/mudbox.h>
 
 
-using mudbox::SubdivisionLevel;
-using mudbox::MeshRenderer;
-
-
 /**
  * Marks the components of the given subdivision level dirty and notifies all
  * renderers that they need to be re-drawn.
@@ -19,7 +15,7 @@ using mudbox::MeshRenderer;
  * @param subdivLevel 	A pointer to the subdivision level that is to be marked
  * 					as dirty.
  */
-void markSubdivisionLevelDirty(SubdivisionLevel *subdivLevel);
+void markSubdivisionLevelDirty(mudbox::SubdivisionLevel *subdivLevel);
 
 
 /**
@@ -27,7 +23,7 @@ void markSubdivisionLevelDirty(SubdivisionLevel *subdivLevel);
  *
  * @param subdivLevel	The subdivision level to re-draw.
  */
-void updateSubdivisionLevel(SubdivisionLevel *subdivLevel);
+void updateSubdivisionLevel(mudbox::SubdivisionLevel *subdivLevel);
 
 
 #endif /* MUDBOX_DEFORMERS_UTIL_H */

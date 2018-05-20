@@ -1,9 +1,11 @@
-#include <ssmath/ss_common_math.h>
 #include "mudbox_deformers_spherify_deformer.h"
 #include "mudbox_deformers_util.h"
+
+#include <cassert>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+
 #include <QtCore/Qt>
 #include <QtGui/QGroupBox>
 #include <QtGui/QHBoxLayout>
@@ -13,15 +15,25 @@
 #include <QtGui/QLabel>
 #include <QtGui/QMessageBox>
 
+
+using mudbox::Attribute;
 using mudbox::AxisAlignedBoundingBox;
+using mudbox::Geometry;
 using mudbox::Interface;
 using mudbox::Kernel;
 using mudbox::Mesh;
 using mudbox::MeshChange;
 using mudbox::MeshRenderer;
 using mudbox::Node;
+using mudbox::NodeEventType;
 using mudbox::Scene;
+using mudbox::SceneMembershipEventNotifier;
 using mudbox::SubdivisionLevel;
+using mudbox::TreeNode;
+using mudbox::Vector;
+using mudbox::aevent;
+using mudbox::afloatr;
+using mudbox::aptr;
 using mudbox::etEventTriggered;
 using mudbox::etPointerContentChanged;
 using mudbox::etPointerTargetDestroyed;
@@ -29,6 +41,7 @@ using mudbox::etValueChanged;
 
 using std::malloc;
 using std::strlen;
+using std::vector;
 
 
 // NOTE: (sonictk) For Mudbox RTTI system
@@ -51,7 +64,7 @@ SpherifyDeformer::SpherifyDeformer() : Node(SPHERIFY_DEFORMER_NAME),
 
 	int nameLen = int(strlen(SPHERIFY_DEFORMER_NAME)) + findNumberOfDigits(NUM_OF_SPHERIFY_DEFORMER_NODES);
 	char *nodeName = (char *)malloc(sizeof(char) * nameLen + 1);
-	snprintf(nodeName, sizet(nameLen), "%s%d", SPHERIFY_DEFORMER_NAME, NUM_OF_SPHERIFY_DEFORMER_NODES);
+	snprintf(nodeName, size_t(nameLen), "%s%d", SPHERIFY_DEFORMER_NAME, NUM_OF_SPHERIFY_DEFORMER_NODES);
 	QString nodeNameQS(nodeName);
 	SetName(nodeNameQS);
 	SetDisplayName(QString(displayName));
@@ -60,33 +73,32 @@ SpherifyDeformer::SpherifyDeformer() : Node(SPHERIFY_DEFORMER_NAME),
 
 	targetMesh.m_sNullString = QString("Select a mesh");
 
-	Geometry *activeGeo = Kernel()->Scene()->ActiveGeometry();
-	targetMesh = activeGeo;
-
-	updateOriginalPointPositions();
-
 	spherifyWeight.SetValue(defaultWeight);
 
-	// NOTE: (sonictk) Connect the scene member event to the global one so that
+	// TODO: (sonictk) Connect the scene member event to the global one so that
 	// we can catch the deletion event of the target mesh if it happens and delete
 	// this node as well
-	sceneEvent.Connect(Kernel()->Scene()->SceneMembershipEvent);
+	// sceneEvent.Connect(Kernel()->Scene()->SceneMembershipEvent);
 }
 
 
 QWidget *SpherifyDeformer::CreatePropertiesWindow(QWidget *parent)
 {
+	Geometry *activeGeo = Kernel()->Scene()->ActiveGeometry();
+	if (activeGeo != NULL) {
+		targetMesh = activeGeo;
+		updateOriginalPointPositions();
+	}
+
 	QWidget *propertiesWidget = TreeNode::CreatePropertiesWindow(parent);
 
-	// TODO: (sonictk) Figure out why Mudbox keeps references to these widgets and
-	// where, since stack alloc crashes after widget closure
+	// NOTE: (sonictk) Since stack alloc crashes after widget closure, we have to allocate on heap.
 	QVBoxLayout *mainLayout = new QVBoxLayout;
 	QPushButton *closeBtn = new QPushButton("Close");
 
-	// TODO: (sonictk) Figure out why without the widget holder, nothing shows up
-	// TODO: (sonictk) Figure out why there's blank space at the top of the widget
 	mainLayout->addWidget(closeBtn);
 
+	// NOTE: (sonictk) Without the widget holder, nothing shows up
 	QWidget *widgetHolder = new QWidget;
 	widgetHolder->setLayout(mainLayout);
 
@@ -99,7 +111,7 @@ QWidget *SpherifyDeformer::CreatePropertiesWindow(QWidget *parent)
 	propertiesWidget->layout()->addWidget(widgetHolder);
 	propertiesWidget->show();
 
-	// TODO: (sonictk) Figure out why the mudbox widget attribute holder doesn't
+	// NOTE: (sonictk) We do this becauase the Mudbox widget attribute holder doesn't
 	// resize to its contents automatically
 	propertiesWidget->setMinimumHeight(propertiesWidget->height() + 50);
 
@@ -154,11 +166,6 @@ void SpherifyDeformer::spherifyCB(float weight)
 
 void SpherifyDeformer::OnNodeEvent(const Attribute &attribute, NodeEventType eventType)
 {
-	// TODO: (sonictk) Figure out how to get this callback working
-	if (attribute == sceneEvent) {
-		Kernel()->Interface()->HUDMessageShow("test");
-	}
-
 	if (attribute == targetMesh) {
 		switch (eventType) {
 
@@ -181,16 +188,13 @@ void SpherifyDeformer::OnNodeEvent(const Attribute &attribute, NodeEventType eve
 	} else if (attribute == spherifyWeight) {
 		switch (eventType) {
 		case etValueChanged: {
-			float weight = spherifyWeight.Value();
-			if (areFloatsEqual(weight, 0.0f)) {
+			if (!targetMesh) {
+				Kernel()->Interface()->HUDMessageShow("Please select a mesh first from the drop-down menu!");
 				return;
 			}
 
-			// TODO: (sonictk) This check seems to be worthless
-			if (!targetMesh) {
-				Kernel()->Interface()->MessageBox(Interface::msgError,
-												  QString("Cannot apply deformation!"),
-												  QString("Please select a mesh first from the drop-down menu!"));
+			float weight = spherifyWeight.Value();
+			if (areFloatsEqual(weight, 0.0f)) {
 				return;
 			}
 
@@ -201,6 +205,7 @@ void SpherifyDeformer::OnNodeEvent(const Attribute &attribute, NodeEventType eve
 		case etPointerTargetDestroyed:
 			NUM_OF_SPHERIFY_DEFORMER_NODES--;
 			break;
+
 		default:
 			break;
 		}
@@ -258,6 +263,7 @@ void SpherifyDeformer::OnNodeEvent(const Attribute &attribute, NodeEventType eve
 		// NOTE: (sonictk) Remove the node from the graph first otherwise children
 		// will have invalid sibling ptrs.
 		Kernel()->Scene()->RemoveChild(this);
+
 		// NOTE: (sonictk) If the UI is not refreshed before ``this`` is deleted,
 		// Mudbox crashes. Guess the UI holds a reference to the ``TreeNode`` class
 		// instance or something. Wonderful.

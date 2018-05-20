@@ -1,6 +1,8 @@
 #include "mudbox_deformers_util.h"
 
 using mudbox::Kernel;
+using mudbox::SubdivisionLevel;
+using mudbox::MeshRenderer;
 
 
 void markSubdivisionLevelDirty(SubdivisionLevel *subdivLevel)

@@ -8,12 +8,14 @@
 #include <QtGui/QHBoxLayout>
 #include <QtGui/QWidget>
 #include <QtGui/QPushButton>
+#include <QtGui/QCheckBox>
 
 using mudbox::Kernel;
 using mudbox::Geometry;
 using mudbox::SubdivisionLevel;
 using mudbox::Interface;
 using mudbox::MeshRenderer;
+using mudbox::Vector;
 
 
 BendDeformer *BendDeformer::existingWidget = NULL;
@@ -31,14 +33,26 @@ BendDeformer::BendDeformer(QWidget *parent, Qt::WindowFlags flags) : QWidget(par
 	QVBoxLayout *settingsGrpLayout = new QVBoxLayout;
 	QGroupBox *settingsGrp = new QGroupBox("Bend settings");
 
+	QHBoxLayout *axesGrpLayout = new QHBoxLayout;
+	QGroupBox *axesGrp = new QGroupBox("Axes to bend");
+
+	QCheckBox *axisXCheckBox = new QCheckBox("x");
+	QCheckBox *axisYCheckBox = new QCheckBox("y");
+	QCheckBox *axisZCheckBox = new QCheckBox("z");
+
+	axesGrpLayout->addWidget(axisXCheckBox);
+	axesGrpLayout->addWidget(axisYCheckBox);
+	axesGrpLayout->addWidget(axisZCheckBox);
+
+	axesGrp->setLayout(axesGrpLayout);
+	settingsGrpLayout->addWidget(axesGrp);
+
 	QHBoxLayout *weightLayout = new QHBoxLayout;
 	QLabel *sliderLabel = new QLabel("Weight");
 	QSlider *sliderWeight = new QSlider(Qt::Horizontal);
 	sliderWeight->setRange(0, 100);
 
 	QPushButton *closeBtn = new QPushButton("Close");
-
-	QPushButton *testBtn = new QPushButton("Test");
 
 	weightLayout->addWidget(sliderLabel);
 	weightLayout->addWidget(sliderWeight);
@@ -49,7 +63,6 @@ BendDeformer::BendDeformer(QWidget *parent, Qt::WindowFlags flags) : QWidget(par
 	mainLayout->addWidget(settingsGrp);
 	mainLayout->addWidget(closeBtn);
 
-	mainLayout->addWidget(testBtn);
 	setLayout(mainLayout);
 
 	bool result = connect(closeBtn, SIGNAL(released()), this, SLOT(close()));
@@ -68,8 +81,6 @@ BendDeformer::~BendDeformer()
 
 void BendDeformer::bendCB(int weight)
 {
-	Kernel()->Interface()->HUDMessageShow("test");
-
 	float bendWeight = 1.0f / float(weight);
 
 	Geometry *activeGeo = Kernel()->Scene()->ActiveGeometry();

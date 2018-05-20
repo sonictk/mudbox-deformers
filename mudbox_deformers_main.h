@@ -8,26 +8,17 @@
 #include <Mudbox/mudbox.h>
 #include <QtCore/QString>
 
-// NOTE: (sonictk) This is after the mudbox headers since some defines will clash otherwise
-#ifndef SS_PLATFORM_LEAN
-#define SS_PLATFORM_LEAN
-#endif // SS_PLATFORM_LEAN
-#include <ssmath/ss_platform.h>
-
-#ifdef MessageBox
-#undef MessageBox
-#endif // MessageBox
-
 // NOTE: (sonictk) Unity build
+#include "mudbox_deformers_common_math.h"
 #include "mudbox_deformers_util.cpp"
 #include "mudbox_deformers_spherify_deformer.cpp"
 #include "mudbox_deformers_bend_deformer.cpp"
 
 
-globalVar const char MUDBOX_DEFORMERS_PLUGIN_NAME[] = "Mudbox deformers";
-globalVar const char MUDBOX_DEFORMERS_PLUGIN_DESCRIPTION[] = "Various mesh deformers.";
-globalVar const char MUDBOX_DEFORMERS_PLUGIN_AUTHOR[] = "Siew Yi Liang";
-globalVar const char MUDBOX_DEFORMERS_PLUGIN_URL[] = "http://www.sonictk.com/";
+static const char MUDBOX_DEFORMERS_PLUGIN_NAME[] = "Mudbox deformers";
+static const char MUDBOX_DEFORMERS_PLUGIN_DESCRIPTION[] = "Various mesh deformers.";
+static const char MUDBOX_DEFORMERS_PLUGIN_AUTHOR[] = "Siew Yi Liang";
+static const char MUDBOX_DEFORMERS_PLUGIN_URL[] = "http://www.sonictk.com/";
 
 
 /**

@@ -53,22 +53,23 @@ find_package(Qt4 4.8.6 REQUIRED QtGui QtCore)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 include_directories(
-    "${PROJECT_SOURCE_DIR}/thirdparty"
     "${MUDBOX_SDK_ROOT}/include")
 
-# TODO: (sonictk) Setup for clang and gcc
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+# TODO: (sonictk) Setup for Linux/Mac
+if(MACOSX)
     message(STATUS "Detected compiler as Clang...")
     # Using Clang
     set(CMAKE_CXX_FLAGS "-std=c++0x -pthread")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -g -gdwarf-4 -gmodules -O0")
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+
+elseif(LINUX)
     # using GCC on Linux
     set(CMAKE_CXX_FLAGS "-std=c++0x -pthread -fno-rtti -Winline")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -ggdb -O0")
-elseif(MSVC)
+
+elseif(WINDOWS)
     # using Visual Studio on Windows
     set(CMAKE_CXX_FLAGS "/GS /W3 /Zc:wchar_t /Zc:inline /fp:precise /errorReport:none /WX- /EHsc /nologo /MP /arch:AVX2 /std:c++14")
     set(CMAKE_CXX_FLAGS_RELEASE "/Ox /Oi /GL /MD")
@@ -90,6 +91,7 @@ elseif(MSVC)
     # NOTE: (sonictk) Turn on link optimizations for eliminating unreferenced
     # functions/data and identical COMDAT folding
     set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS} /opt:REF /opt:ICF")
+
 endif()
 
 # Unity build
@@ -97,6 +99,7 @@ set(PLUGIN_ENTRY_POINT mudbox_deformers_main.cpp)
 
 # This allows CMake to expose sources to IDEs when generating projects for them (e.g. VS or XCode)
 set(PLUGIN_SOURCES
+    mudbox_deformers_common_math.h
     mudbox_deformers_util.h
     mudbox_deformers_util.cpp
     mudbox_deformers_spherify_deformer.h
@@ -135,9 +138,9 @@ endif()
 
 # find_package(Qt4Macros REQUIRED)
 # qt_wrap_cpp(${PROJECT_NAME} MOC_SOURCES "${PROJECT_SOURCE_DIR}/mudbox_deformers_bend_deformer.h")
-
 # add_library(${PROJECT_NAME} SHARED ${MOC_SOURCES} ${PLUGIN_SOURCES} ${PLUGIN_ENTRY_POINT})
-add_library(${PROJECT_NAME} SHARED ${MOC_SOURCES} ${PLUGIN_SOURCES} ${PLUGIN_ENTRY_POINT})
+
+add_library(${PROJECT_NAME} SHARED ${PLUGIN_SOURCES} ${PLUGIN_ENTRY_POINT})
 
 target_link_libraries(${PROJECT_NAME} ${MUDBOX_LIBRARIES} ${OS_LIBRARIES})
 
