@@ -9,11 +9,11 @@
 #include <QtCore/Qt>
 #include <QtGui/QGroupBox>
 #include <QtGui/QHBoxLayout>
+#include <QtGui/QLabel>
+#include <QtGui/QMessageBox>
 #include <QtGui/QPushButton>
 #include <QtGui/QSlider>
 #include <QtGui/QVBoxLayout>
-#include <QtGui/QLabel>
-#include <QtGui/QMessageBox>
 
 
 using mudbox::Attribute;
@@ -84,6 +84,15 @@ SpherifyDeformer::SpherifyDeformer() : Node(SPHERIFY_DEFORMER_NAME),
 
 QWidget *SpherifyDeformer::CreatePropertiesWindow(QWidget *parent)
 {
+	unsigned int numOfGeos = Kernel()->Scene()->GeometryCount();
+	if (numOfGeos == 0) {
+		Kernel()->Interface()->MessageBox(Interface::msgError,
+										  "No meshes available to deform!",
+										  "There are no meshes in the scene to deform!");
+
+		return NULL;
+	}
+
 	Geometry *activeGeo = Kernel()->Scene()->ActiveGeometry();
 	if (activeGeo != NULL) {
 		targetMesh = activeGeo;

@@ -29,16 +29,19 @@ inline bool areFloatsEqual(float a, float b, float epsilon)
 	}
 }
 
+/// @overload
 inline bool areFloatsEqual(float a, float b)
 {
 	return areFloatsEqual(a, b, FLT_EPSILON);
 }
 
+/// @overload
 inline bool isEqual(float a, float b)
 {
 	return areFloatsEqual(a, b, FLT_EPSILON);
 }
 
+/// @overload
 inline bool isEqual(double a, double b, double epsilon)
 {
 	if (fabs(a - b) < epsilon) {
@@ -48,6 +51,7 @@ inline bool isEqual(double a, double b, double epsilon)
 	}
 }
 
+/// @overload
 inline bool isEqual(double a, double b)
 {
 	return isEqual(a, b, DBL_EPSILON);
@@ -81,6 +85,7 @@ inline float lerp(float a, float b, float t)
 	return result;
 }
 
+/// @overload
 inline double lerp(double a, double b, double t)
 {
 	double result = ((1.0 - t) * a) + (t * b);
@@ -88,6 +93,7 @@ inline double lerp(double a, double b, double t)
 	return result;
 }
 
+/// @overload
 inline float lerp(int a, int b, float t)
 {
 	float result = ((1.0f - t) * (float)a) + (t * (float)b);
@@ -95,6 +101,7 @@ inline float lerp(int a, int b, float t)
 	return result;
 }
 
+/// @overload
 inline float lerp(unsigned int a, unsigned int b, float t)
 {
 	float result = ((1.0f - t) * (float)a) + (t * (float)b);
@@ -125,6 +132,7 @@ inline int clamp(int val, int min, int max)
 	return result;
 }
 
+/// @overload
 inline unsigned int clamp(unsigned int val, unsigned int min, unsigned int max)
 {
 	unsigned int result = val;
@@ -138,6 +146,7 @@ inline unsigned int clamp(unsigned int val, unsigned int min, unsigned int max)
 	return result;
 }
 
+/// @overload
 inline float clamp(float val, float min, float max)
 {
 	float result = val;
@@ -151,6 +160,7 @@ inline float clamp(float val, float min, float max)
 	return result;
 }
 
+/// @overload
 inline double clamp(double val, double min, double max)
 {
 	double result = val;
@@ -165,8 +175,28 @@ inline double clamp(double val, double min, double max)
 }
 
 
-#ifdef __cplusplus
+/**
+ * Calculates the linear parameter that produces the interpolant ``val`` within the
+ * range ``[min, max]``.
+ *
+ * @param val		The interpolant.
+ * @param min		The minimum value of the range.
+ * @param max		The maximum value of the range.
+ *
+ * @return			The linear parameter.
+ */
+inline float unlerp(float val, float min, float max)
+{
+	return (val - min) / (max - min);
+}
 
+inline double unlerp(double val, double min, double max)
+{
+	return (val - min) / (max - min);
+}
+
+
+#ifdef __cplusplus
 /**
  * Linearly interpolate between ``a`` and ``b`` by factor ``t``. The type provided
  * must support the ``*`` and assignment operands.
@@ -233,7 +263,6 @@ inline T clamp(T val, T min, T max)
 
 	return result;
 }
-
 #endif // __cplusplus
 
 
@@ -254,6 +283,40 @@ inline int findNumberOfDigits(int num)
 
 	return n;
 }
+
+
+/**
+ * Calculates the inner product (dot product) of the given vectors.
+ *
+ * @param v1 	The first vector.
+ * @param v2 	The second vector.
+ *
+ * @return 	The inner product.
+ */
+float innerProduct(const mudbox::Vector &v1, const mudbox::Vector &v2);
+
+
+/**
+ * Calculates the cross product of the given vectors.
+ *
+ * @param v1 	The first vector.
+ * @param v2 	The second vector.
+ *
+ * @return 	The cross product.
+ */
+mudbox::Vector crossProduct(const mudbox::Vector &v1, const mudbox::Vector &v2);
+
+
+/**
+ * Rotates the given vector by a specified amount.
+ *
+ * @param v			The vector to rotate.
+ * @param axis			The axis to rotate about.
+ * @param angle		The angle to rotate by, in **radians**.
+ *
+ * @return				The rotated vector.
+ */
+mudbox::Vector rotateBy(const mudbox::Vector &v, const mudbox::Vector &axis, float angle);
 
 
 #endif /* MUDBOX_DEFORMERS_COMMON_MATH_H */
