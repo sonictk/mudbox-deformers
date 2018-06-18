@@ -11,6 +11,7 @@
 #include <QtGui/QComboBox>
 #include <QtCore/QString>
 #include <QtGui/QSpinBox>
+#include <QtGui/QCloseEvent>
 
 #include <vector>
 
@@ -78,13 +79,35 @@ public:
 	/// Widget that allows for selection of bend direction angle.
 	QSlider *sliderBendDirection;
 
+	/**
+	 * Overridden in order to allow for resetting the UI widgets to default state
+	 * before closing the widget.
+	 *
+	 * @param event 	The close event.
+	 */
+	void closeEvent(QCloseEvent *event);
+
 public slots:
-	/// This callback is triggered when the user moves the weight slider in the UI.
-	/// It is responsible for bending the actively-selected mesh.
+	/**
+	 * This callback is triggered when the user moves the weight slider in the UI.
+	 * It is responsible for bending the actively-selected mesh.
+	 *
+	 * @param angle	The value selected in the UI slider.
+	 */
 	void bendCB(int angle);
 
+	/**
+	 * This callback is triggered when the user enters a value in the bend angle spinbox.
+	 *
+	 * @param angle 	The value entered in the spinbox.
+	 */
 	void setBendAngleCB(int angle);
 
+	/**
+	 * This callback is triggered when the user moves the bend direction slider in the UI.
+	 *
+	 * @param angle 	The value selected in the UI slider.
+	 */
 	void bendDirectionCB(int angle);
 
 	void setBendDirectionAngleCB(int angle);

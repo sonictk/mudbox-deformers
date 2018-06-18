@@ -176,6 +176,13 @@ BendDeformer::~BendDeformer()
 }
 
 
+void BendDeformer::closeEvent(QCloseEvent *event)
+{
+	resetSliders();
+	QWidget::closeEvent(event);
+}
+
+
 void BendDeformer::bendCB(int angle)
 {
 	spinBoxBendAngle->blockSignals(true);
@@ -240,7 +247,8 @@ void BendDeformer::bendCB(int angle)
 		Vector origPos = origPtPositions[i];
 		Vector finalPos = Vector(origPos);
 
-		// finalPos = rotateBy(finalPos, helperRotateAxis, helperBendAngle);
+		// NOTE: (sonictk) Take bend direction into account
+		finalPos = rotateBy(finalPos, helperRotateAxis, bendDirectionAngle);
 
 		float meshPtAxisLength;
 		switch (bendAxis) {
@@ -328,7 +336,8 @@ void BendDeformer::bendCB(int angle)
 			}
 		}
 
-		// finalPos = rotateBy(finalPos, helperRotateAxis, -helperBendAngle);
+		// NOTE: (sonictk) Take bend direction into account
+		finalPos = rotateBy(finalPos, helperRotateAxis, -bendDirectionAngle);
 
 		activeSubdivLevel->SetVertexPosition(i, finalPos);
 	}
@@ -416,6 +425,7 @@ void BendDeformer::resetSliders()
 {
 	sliderBendAngle->blockSignals(true);
 	spinBoxBendAngle->blockSignals(true);
+	comboBoxBendAxis->blockSignals(true);
 
 	sliderBendDirection->blockSignals(true);
 	spinBoxBendDirectionAngle->blockSignals(true);
@@ -426,11 +436,14 @@ void BendDeformer::resetSliders()
 	sliderBendDirection->setValue(0);
 	spinBoxBendDirectionAngle->setValue(0);
 
+	comboBoxBendAxis->setCurrentIndex(0);
+
 	spinBoxBendAngle->blockSignals(false);
 	sliderBendAngle->blockSignals(false);
 
 	spinBoxBendDirectionAngle->blockSignals(false);
 	sliderBendDirection->blockSignals(false);
+	comboBoxBendAxis->blockSignals(false);
 }
 
 
