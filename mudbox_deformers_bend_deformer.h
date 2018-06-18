@@ -15,9 +15,6 @@
 #include <vector>
 
 
-static const char BEND_DEFORMER_NAME[] = "BendDeformer";
-
-
 enum BendDeformerAxis
 {
 	BEND_DEFORMER_AXIS_X,
@@ -42,25 +39,65 @@ public:
 	/// Name of the Qt object.
 	static const QString objName;
 
+	/// The minimum bend angle limit.
 	int bendAngleMin;
+
+	/// The maximum bend angle limit.
 	int bendAngleMax;
 
+	/// Storage for the original positions of the mesh before the deformation application.
 	std::vector<mudbox::Vector> origPtPositions;
 
+	/// Storage for the original active geometry being deformed.
 	mudbox::Geometry *activeGeo;
 
+	/// Widget that allows selection of the cardinal axis along which to perform deformation.
 	QComboBox *comboBoxBendAxis;
 
+	/// Widget that specifies lower bound for bend angle.
 	QSpinBox *spinBoxBendRangeStartAngle;
 
+	/// Widget that specifies upper bound for bend angle.
 	QSpinBox *spinBoxBendRangeEndAngle;
 
+	/// Widget that specifies bend angle.
+	QSpinBox *spinBoxBendAngle;
+
+	/// Widget that allows for selection of bend angle.
 	QSlider *sliderBendAngle;
+
+	/// Widget that specifies lower bound for bend direction angle.
+	QSpinBox *spinBoxBendDirectionStartAngle;
+
+	/// Widget that specifies upper bound for bend direction angle.
+	QSpinBox *spinBoxBendDirectionEndAngle;
+
+	/// Widget that specifies bend direction angle.
+	QSpinBox *spinBoxBendDirectionAngle;
+
+	/// Widget that allows for selection of bend direction angle.
+	QSlider *sliderBendDirection;
 
 public slots:
 	/// This callback is triggered when the user moves the weight slider in the UI.
 	/// It is responsible for bending the actively-selected mesh.
 	void bendCB(int angle);
+
+	void setBendAngleCB(int angle);
+
+	void bendDirectionCB(int angle);
+
+	void setBendDirectionAngleCB(int angle);
+
+	void setBendDirectionStartAngleCB(int angle);
+
+	void setBendDirectionEndAngleCB(int angle);
+
+	void setBendRangeStartAngleCB(int angle);
+
+	void setBendRangeEndAngleCB(int angle);
+
+	void resetSliders();
 
 	void applyCB();
 

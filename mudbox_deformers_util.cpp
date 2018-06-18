@@ -30,3 +30,15 @@ void updateSubdivisionLevel(SubdivisionLevel *subdivLevel)
 
 	Kernel()->ViewPort()->Redraw();
 }
+
+
+void quickUpdateSubdivisionLevel(SubdivisionLevel *subdivLevel)
+{
+	subdivLevel->ApplyChanges(true);
+
+	// NOTE: (sonictk) Mark the mesh components dirty and notify all the renderers
+	// to redraw the mesh
+	markSubdivisionLevelDirty(subdivLevel);
+
+	Kernel()->ViewPort()->Redraw();
+}

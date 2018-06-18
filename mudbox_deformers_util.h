@@ -19,11 +19,22 @@ void markSubdivisionLevelDirty(mudbox::SubdivisionLevel *subdivLevel);
 
 
 /**
- * Re-draws the given subdivision level's components in the viewport.
+ * Re-draws the given subdivision level's components in the viewport. Also updates
+ * normals and vertices' adjacency.
  *
  * @param subdivLevel	The subdivision level to re-draw.
  */
 void updateSubdivisionLevel(mudbox::SubdivisionLevel *subdivLevel);
+
+
+/**
+ * Re-draws the given subdivision level's components in the viewport. Similar to
+ * ``updateSubdivisionLevel`` except that it performs faster since vertex
+ * normals/adjacencies are not re-calculated.
+ *
+ * @param subdivLevel	The subdivision level to re-draw.
+ */
+void quickUpdateSubdivisionLevel(mudbox::SubdivisionLevel *subdivLevel);
 
 
 #endif /* MUDBOX_DEFORMERS_UTIL_H */
