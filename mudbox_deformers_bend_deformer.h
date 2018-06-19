@@ -98,6 +98,15 @@ public:
 	void closeEvent(QCloseEvent *event);
 
 	/**
+	 * Checks if the active geometry selection is mismatched with the cache storage
+	 * and updates the cache if necessary.
+	 *
+	 * @return	``true`` if the cache was updated as a result of this operation,
+	 * 		``false`` otherwise.
+	 */
+	bool checkActiveGeometryAndUpdateCache();
+
+	/**
 	 * Updates the internal cache for the original point positions. Use this when
 	 * you are "saving" the current state of the mesh for restore operations.
 	 */

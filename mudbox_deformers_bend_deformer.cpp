@@ -188,6 +188,27 @@ void BendDeformer::closeEvent(QCloseEvent *event)
 }
 
 
+bool BendDeformer::checkActiveGeometryAndUpdateCache()
+{
+	Geometry *activeGeo = Kernel()->Scene()->ActiveGeometry();
+	if (!activeGeo) {
+		activeSubdivLevel = NULL;
+
+		return true;
+	}
+
+	SubdivisionLevel *currentSubdivLevel = activeGeo->ActiveLevel();
+
+	if (currentSubdivLevel != activeSubdivLevel) {
+		updateOriginalPointPositions();
+
+		return true;
+	}
+
+	return false;
+}
+
+
 void BendDeformer::updateOriginalPointPositions()
 {
 	Geometry *activeGeo = Kernel()->Scene()->ActiveGeometry();
@@ -277,6 +298,12 @@ void BendDeformer::bendCB(int angle)
 	}
 
 	if (!checkActiveGeometrySelection()) {
+		return;
+	}
+
+	checkActiveGeometryAndUpdateCache();
+
+	if (!activeSubdivLevel) {
 		return;
 	}
 
