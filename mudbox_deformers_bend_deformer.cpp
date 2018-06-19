@@ -36,7 +36,10 @@ const QString BendDeformer::objName = "bendDeformerUI";
 BendDeformer::BendDeformer(QWidget *parent, Qt::WindowFlags flags) :
 		QWidget(parent, flags),
 		bendAngleMin(-360),
-		bendAngleMax(360)
+		bendAngleMax(360),
+		bendRadiusMin(-100),
+		bendRadiusMax(100),
+		bendRadiusOffset(0.0f)
 {
 	Geometry *activeGeo = Kernel()->Scene()->ActiveGeometry();
 	if (!activeGeo) {
@@ -109,6 +112,24 @@ BendDeformer::BendDeformer(QWidget *parent, Qt::WindowFlags flags) :
 	sliderBendDirection->setRange(bendAngleMin, bendAngleMax);
 	sliderBendDirection->setValue(0);
 
+	QLabel *labelBendRadius = new QLabel("Bend radius");
+
+	spinBoxBendRadiusMin = new QSpinBox(this);
+	spinBoxBendRadiusMin->setRange(bendRadiusMin, bendRadiusMax);
+	spinBoxBendRadiusMin->setValue(bendRadiusMin);
+
+	spinBoxBendRadiusMax = new QSpinBox(this);
+	spinBoxBendRadiusMax->setRange(bendRadiusMin, bendRadiusMax);
+	spinBoxBendRadiusMax->setValue(bendRadiusMax);
+
+	spinBoxBendRadius = new QSpinBox(this);
+	spinBoxBendRadius->setRange(bendRadiusMin, bendRadiusMax);
+	spinBoxBendRadius->setValue(0);
+
+	sliderBendRadius = new QSlider(Qt::Horizontal);
+	sliderBendRadius->setRange(bendRadiusMin, bendRadiusMax);
+	sliderBendRadius->setValue(0);
+
 	layoutSliders->addWidget(labelBendAngle, 0, 0);
 	layoutSliders->addWidget(spinBoxBendRangeStartAngle, 0, 1);
 	layoutSliders->addWidget(sliderBendAngle, 0, 2);
@@ -120,6 +141,12 @@ BendDeformer::BendDeformer(QWidget *parent, Qt::WindowFlags flags) :
 	layoutSliders->addWidget(sliderBendDirection, 1, 2);
 	layoutSliders->addWidget(spinBoxBendDirectionEndAngle, 1, 3);
 	layoutSliders->addWidget(spinBoxBendDirectionAngle, 1, 4);
+
+	layoutSliders->addWidget(labelBendRadius, 2, 0);
+	layoutSliders->addWidget(spinBoxBendRadiusMin, 2, 1);
+	layoutSliders->addWidget(sliderBendRadius, 2, 2);
+	layoutSliders->addWidget(spinBoxBendRadiusMax, 2, 3);
+	layoutSliders->addWidget(spinBoxBendRadius, 2, 4);
 
 	QPushButton *applyBtn = new QPushButton("Apply");
 	QPushButton *resetBtn = new QPushButton("Reset");
@@ -135,6 +162,7 @@ BendDeformer::BendDeformer(QWidget *parent, Qt::WindowFlags flags) :
 
 	setLayout(mainLayout);
 
+	// NOTE: (sonictk) Signals for the various GUI buttons
 	bool result = connect(closeBtn, SIGNAL(released()), this, SLOT(close()));
 	assert(result == true);
 
@@ -144,12 +172,20 @@ BendDeformer::BendDeformer(QWidget *parent, Qt::WindowFlags flags) :
 	result = connect(resetBtn, SIGNAL(released()), this, SLOT(resetCB()));
 	assert(result == true);
 
+	// NOTE: (sonictk) Signals for the bend angle group
 	result = connect(sliderBendAngle, SIGNAL(valueChanged(int)), this, SLOT(bendCB(int)));
 	assert(result == true);
 
 	result = connect(spinBoxBendAngle, SIGNAL(valueChanged(int)), this, SLOT(setBendAngleCB(int)));
 	assert(result == true);
 
+	result = connect(spinBoxBendRangeStartAngle, SIGNAL(valueChanged(int)), this, SLOT(setBendRangeStartAngleCB(int)));
+	assert(result == true);
+
+	result = connect(spinBoxBendRangeEndAngle, SIGNAL(valueChanged(int)), this, SLOT(setBendRangeEndAngleCB(int)));
+	assert(result == true);
+
+	// NOTE: (sonictk) Signals for the bend direction group
 	result = connect(sliderBendDirection, SIGNAL(valueChanged(int)), this, SLOT(bendDirectionCB(int)));
 	assert(result == true);
 
@@ -162,10 +198,17 @@ BendDeformer::BendDeformer(QWidget *parent, Qt::WindowFlags flags) :
 	result = connect(spinBoxBendDirectionEndAngle, SIGNAL(valueChanged(int)), this, SLOT(setBendDirectionEndAngleCB(int)));
 	assert(result == true);
 
-	result = connect(spinBoxBendRangeStartAngle, SIGNAL(valueChanged(int)), this, SLOT(setBendRangeStartAngleCB(int)));
+	// NOTE: (sonictk) Signals for the bend radius group
+	result = connect(sliderBendRadius, SIGNAL(valueChanged(int)), this, SLOT(bendRadiusCB(int)));
 	assert(result == true);
 
-	result = connect(spinBoxBendRangeEndAngle, SIGNAL(valueChanged(int)), this, SLOT(setBendRangeEndAngleCB(int)));
+	result = connect(spinBoxBendRadiusMin, SIGNAL(valueChanged(int)), this, SLOT(setBendRadiusMinCB(int)));
+	assert(result == true);
+
+	result = connect(spinBoxBendRadiusMax, SIGNAL(valueChanged(int)), this, SLOT(setBendRadiusMaxCB(int)));
+	assert(result == true);
+
+	result = connect(spinBoxBendRadius, SIGNAL(valueChanged(int)), this, SLOT(setBendRadiusCB(int)));
 	assert(result == true);
 }
 
@@ -340,6 +383,7 @@ void BendDeformer::bendCB(int angle)
 		break;
 	}
 
+	bendRadius += bendRadiusOffset;
 	bendRadius *= PI / helperBendAngle;
 
 	float helperRadius = bendAngle < 0.0f ? -bendRadius : bendRadius;
@@ -513,6 +557,30 @@ void BendDeformer::setBendRangeEndAngleCB(int angle)
 
 	sliderBendAngle->setMaximum(angle);
 	spinBoxBendAngle->setMaximum(angle);
+}
+
+
+void BendDeformer::bendRadiusCB(int radius)
+{
+	bendRadiusOffset = (float)radius;
+}
+
+
+void BendDeformer::setBendRadiusMinCB(int radius)
+{
+	// TODO: (sonictk)
+}
+
+
+void BendDeformer::setBendRadiusMaxCB(int radius)
+{
+	// TODO: (sonictk)
+}
+
+
+void BendDeformer::setBendRadiusCB(int radius)
+{
+	// TODO: (sonictk)
 }
 
 

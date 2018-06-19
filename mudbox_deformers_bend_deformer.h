@@ -55,6 +55,12 @@ public:
 	/// The maximum bend angle limit.
 	int bendAngleMax;
 
+	int bendRadiusMin;
+
+	int bendRadiusMax;
+
+	float bendRadiusOffset;
+
 	/// Storage for the original positions of the mesh before the deformation application.
 	std::vector<mudbox::Vector> origPtPositions;
 
@@ -88,6 +94,14 @@ public:
 
 	/// Widget that allows for selection of bend direction angle.
 	QSlider *sliderBendDirection;
+
+	QSpinBox *spinBoxBendRadiusMin;
+
+	QSpinBox *spinBoxBendRadiusMax;
+
+	QSpinBox *spinBoxBendRadius;
+
+	QSlider *sliderBendRadius;
 
 	/**
 	 * Overridden in order to allow for resetting the UI widgets to default state
@@ -170,6 +184,14 @@ public slots:
 	void setBendRangeStartAngleCB(int angle);
 
 	void setBendRangeEndAngleCB(int angle);
+
+	void bendRadiusCB(int radius);
+
+	void setBendRadiusMinCB(int radius);
+
+	void setBendRadiusMaxCB(int radius);
+
+	void setBendRadiusCB(int radius);
 
 	void applyCB();
 
