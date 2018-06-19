@@ -38,7 +38,7 @@ BendDeformer::BendDeformer(QWidget *parent, Qt::WindowFlags flags) :
 		bendAngleMin(-360),
 		bendAngleMax(360)
 {
-	activeGeo = Kernel()->Scene()->ActiveGeometry();
+	Geometry *activeGeo = Kernel()->Scene()->ActiveGeometry();
 	if (!activeGeo) {
 		Kernel()->Interface()->MessageBox(Interface::msgError,
 										  "No mesh selected!",
@@ -179,7 +179,98 @@ BendDeformer::~BendDeformer()
 void BendDeformer::closeEvent(QCloseEvent *event)
 {
 	resetSliders();
+
+	resetGeometryPositions();
+
+	updateSubdivisionLevel(activeSubdivLevel);
+
 	QWidget::closeEvent(event);
+}
+
+
+void BendDeformer::updateOriginalPointPositions()
+{
+	Geometry *activeGeo = Kernel()->Scene()->ActiveGeometry();
+	if (!activeGeo) {
+		return;
+	}
+
+	origPtPositions.clear();
+	activeSubdivLevel = activeGeo->ActiveLevel();
+	unsigned int numOfVertices = activeSubdivLevel->VertexCount();
+
+	for (unsigned int i=0; i < numOfVertices; ++i) {
+		Vector pos = activeSubdivLevel->VertexPosition(i);
+		origPtPositions.push_back(pos);
+	}
+}
+
+
+void BendDeformer::resetSliders()
+{
+	sliderBendAngle->setValue(0);
+	spinBoxBendAngle->setValue(0);
+
+	sliderBendDirection->setValue(0);
+	spinBoxBendDirectionAngle->setValue(0);
+}
+
+
+void BendDeformer::resetSlidersWithoutAffectingGeometry()
+{
+	sliderBendAngle->blockSignals(true);
+	spinBoxBendAngle->blockSignals(true);
+
+	sliderBendDirection->blockSignals(true);
+	spinBoxBendDirectionAngle->blockSignals(true);
+
+	resetSliders();
+
+	spinBoxBendAngle->blockSignals(false);
+	sliderBendAngle->blockSignals(false);
+
+	spinBoxBendDirectionAngle->blockSignals(false);
+	sliderBendDirection->blockSignals(false);
+}
+
+
+bool BendDeformer::checkActiveGeometrySelection()
+{
+	Geometry *currentActiveGeo = Kernel()->Scene()->ActiveGeometry();
+	if (!currentActiveGeo) {
+		Kernel()->Interface()->MessageBox(Interface::msgError,
+										  "No mesh selected!",
+										  "You need to select a mesh first!");
+		return false;
+	}
+
+	return true;
+}
+
+
+void BendDeformer::checkActiveGeometrySelectionAndUpdateCache()
+{
+	if (!checkActiveGeometrySelection()) {
+		updateOriginalPointPositions();
+	}
+}
+
+
+BendDeformerStatus BendDeformer::resetGeometryPositions()
+{
+	Geometry *currentActiveGeo = Kernel()->Scene()->ActiveGeometry();
+	SubdivisionLevel *currentSubdivLevel = currentActiveGeo->ActiveLevel();
+	if (!currentActiveGeo || currentSubdivLevel != activeSubdivLevel) {
+		return BendDeformerStatus::BEND_DEFORMER_STATUS_MISMATCHED_SUBDIV_LEVEL;
+	}
+
+	unsigned int numOfVertices = currentSubdivLevel->VertexCount();
+
+	for (unsigned int i=0; i < numOfVertices; ++i) {
+		activeSubdivLevel->SetVertexPosition(i, origPtPositions[i]);
+	}
+
+	return BendDeformerStatus::BEND_DEFORMER_STATUS_SUCCESS;
 }
 
 
@@ -193,19 +284,10 @@ void BendDeformer::bendCB(int angle)
 		return;
 	}
 
-	Geometry *currentActiveGeo = Kernel()->Scene()->ActiveGeometry();
-	if (!currentActiveGeo) {
-		Kernel()->Interface()->MessageBox(Interface::msgError,
-										  "No mesh selected!",
-										  "You need to select a mesh first!");
+	if (!checkActiveGeometrySelection()) {
 		return;
 	}
-	else if (currentActiveGeo != activeGeo) {
-		activeGeo = currentActiveGeo;
-		updateOriginalPointPositions();
-	}
 
-	SubdivisionLevel *activeSubdivLevel = activeGeo->ActiveLevel();
 	unsigned int numOfVertices = activeSubdivLevel->VertexCount();
 
 	BendDeformerAxis bendAxis = static_cast<BendDeformerAxis>
@@ -272,7 +354,6 @@ void BendDeformer::bendCB(int angle)
 
 		float helperCosArcAngle = cosf(helperArcAngle);
 		float helperSinArcAngle = sinf(helperArcAngle);
-
 
 		// NOTE: (sonictk) If the bend radius is 0, rotate the whole mesh
 		if (areFloatsEqual(helperRadius, 0.0f)) {
@@ -421,50 +502,15 @@ void BendDeformer::setBendRangeEndAngleCB(int angle)
 }
 
 
-void BendDeformer::resetSliders()
-{
-	sliderBendAngle->blockSignals(true);
-	spinBoxBendAngle->blockSignals(true);
-	comboBoxBendAxis->blockSignals(true);
-
-	sliderBendDirection->blockSignals(true);
-	spinBoxBendDirectionAngle->blockSignals(true);
-
-	sliderBendAngle->setValue(0);
-	spinBoxBendAngle->setValue(0);
-
-	sliderBendDirection->setValue(0);
-	spinBoxBendDirectionAngle->setValue(0);
-
-	comboBoxBendAxis->setCurrentIndex(0);
-
-	spinBoxBendAngle->blockSignals(false);
-	sliderBendAngle->blockSignals(false);
-
-	spinBoxBendDirectionAngle->blockSignals(false);
-	sliderBendDirection->blockSignals(false);
-	comboBoxBendAxis->blockSignals(false);
-}
-
-
 void BendDeformer::applyCB()
 {
-	resetSliders();
+	resetSlidersWithoutAffectingGeometry();
 
-	Geometry *currentActiveGeo = Kernel()->Scene()->ActiveGeometry();
-	if (!currentActiveGeo) {
-		Kernel()->Interface()->MessageBox(Interface::msgError,
-										  "No mesh selected!",
-										  "You need to select a mesh first!");
+	if (!checkActiveGeometrySelection()) {
 		return;
 	}
-	else if (currentActiveGeo != activeGeo) {
-		activeGeo = currentActiveGeo;
-		updateOriginalPointPositions();
-	}
 
-	SubdivisionLevel *currentSubdivisionLevel = activeGeo->ActiveLevel();
-	updateSubdivisionLevel(currentSubdivisionLevel);
+	updateSubdivisionLevel(activeSubdivLevel);
 
 	updateOriginalPointPositions();
 }
@@ -474,43 +520,11 @@ void BendDeformer::resetCB()
 {
 	resetSliders();
 
-	Geometry *currentActiveGeo = Kernel()->Scene()->ActiveGeometry();
-	if (!currentActiveGeo) {
-		Kernel()->Interface()->MessageBox(Interface::msgError,
-										  "No mesh selected!",
-										  "You need to select a mesh first!");
-		return;
-	}
-	else if (currentActiveGeo != activeGeo) {
-		activeGeo = currentActiveGeo;
-		updateOriginalPointPositions();
-	}
+	resetGeometryPositions();
 
-	SubdivisionLevel *currentSubdivisionLevel = activeGeo->ActiveLevel();
-	unsigned int numOfVertices = currentSubdivisionLevel->VertexCount();
-	for (unsigned int i=0; i < numOfVertices; ++i) {
-		currentSubdivisionLevel->SetVertexPosition(i, origPtPositions[i]);
-	}
+	checkActiveGeometrySelectionAndUpdateCache();
 
-	updateSubdivisionLevel(currentSubdivisionLevel);
-}
-
-
-void BendDeformer::updateOriginalPointPositions()
-{
-	activeGeo = Kernel()->Scene()->ActiveGeometry();
-	if (!activeGeo) {
-		return;
-	}
-
-	origPtPositions.clear();
-	SubdivisionLevel *currentSubdivisionLevel = activeGeo->ActiveLevel();
-	unsigned int numOfVertices = currentSubdivisionLevel->VertexCount();
-
-	for (unsigned int i=0; i < numOfVertices; ++i) {
-		Vector pos = currentSubdivisionLevel->VertexPosition(i);
-		origPtPositions.push_back(pos);
-	}
+	updateSubdivisionLevel(activeSubdivLevel);
 }
 
 

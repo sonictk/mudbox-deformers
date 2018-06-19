@@ -13,6 +13,7 @@
 #include <QtGui/QSpinBox>
 #include <QtGui/QCloseEvent>
 
+#include <climits>
 #include <vector>
 
 
@@ -21,6 +22,14 @@ enum BendDeformerAxis
 	BEND_DEFORMER_AXIS_X,
 	BEND_DEFORMER_AXIS_Y,
 	BEND_DEFORMER_AXIS_Z
+};
+
+
+enum BendDeformerStatus
+{
+	BEND_DEFORMER_STATUS_FAILURE = INT_MIN,
+	BEND_DEFORMER_STATUS_MISMATCHED_SUBDIV_LEVEL,
+	BEND_DEFORMER_STATUS_SUCCESS = 0
 };
 
 
@@ -49,8 +58,9 @@ public:
 	/// Storage for the original positions of the mesh before the deformation application.
 	std::vector<mudbox::Vector> origPtPositions;
 
-	/// Storage for the original active geometry being deformed.
-	mudbox::Geometry *activeGeo;
+	/// Storage for the original active subdivision level at the initialization
+	/// time of the deformation operation.
+	mudbox::SubdivisionLevel *activeSubdivLevel;
 
 	/// Widget that allows selection of the cardinal axis along which to perform deformation.
 	QComboBox *comboBoxBendAxis;
@@ -87,6 +97,18 @@ public:
 	 */
 	void closeEvent(QCloseEvent *event);
 
+	void updateOriginalPointPositions();
+
+	void resetSliders();
+
+	void resetSlidersWithoutAffectingGeometry();
+
+	bool checkActiveGeometrySelection();
+
+	void checkActiveGeometrySelectionAndUpdateCache();
+
+	BendDeformerStatus resetGeometryPositions();
+
 public slots:
 	/**
 	 * This callback is triggered when the user moves the weight slider in the UI.
@@ -120,19 +142,14 @@ public slots:
 
 	void setBendRangeEndAngleCB(int angle);
 
-	void resetSliders();
-
 	void applyCB();
 
 	void resetCB();
-
-	void updateOriginalPointPositions();
 };
 
 
 /**
  * Displays the Bend deformer UI.
- *
  */
 void showBendDeformerUI();
 
