@@ -344,6 +344,7 @@ void BendDeformer::bendCB(int angle)
 
 	float helperRadius = bendAngle < 0.0f ? -bendRadius : bendRadius;
 
+	// TODO: (sonictk) Bend is not perfect, maybe bend radius?
 	for (unsigned int i=0; i < numOfVertices; ++i) {
 		Vector origPos = origPtPositions[i];
 		Vector finalPos = Vector(origPos);
@@ -354,16 +355,16 @@ void BendDeformer::bendCB(int angle)
 		float meshPtAxisLength;
 		switch (bendAxis) {
 		case BendDeformerAxis::BEND_DEFORMER_AXIS_X:
-			meshPtAxisLength = origPos.x;
+			meshPtAxisLength = finalPos.x;
 			break;
 
 		case BendDeformerAxis::BEND_DEFORMER_AXIS_Y:
-			meshPtAxisLength = origPos.y;
+			meshPtAxisLength = finalPos.y;
 			break;
 
 		case BendDeformerAxis::BEND_DEFORMER_AXIS_Z:
 		default:
-			meshPtAxisLength = origPos.z;
+			meshPtAxisLength = finalPos.z;
 			break;
 		}
 
@@ -398,39 +399,33 @@ void BendDeformer::bendCB(int angle)
 			Vector helperOriginVector;
 			switch (bendAxis) {
 			case BendDeformerAxis::BEND_DEFORMER_AXIS_X:
-				finalPos.y = origPos.y;
-
 				helperOriginVector = {0, 0, -helperRadius};
 				helperOriginVector = rotateBy(helperOriginVector, Vector(0, 1, 0), -helperArcAngle);
 
-				finalPos.z = helperOriginVector.z + (origPos.z * helperCosArcAngle) + (helperRemainingUnbentLength * helperSinArcAngle) + helperRadius;
+				finalPos.z = helperOriginVector.z + (finalPos.z * helperCosArcAngle) + (helperRemainingUnbentLength * helperSinArcAngle) + helperRadius;
 
-				finalPos.x = helperOriginVector.x - (origPos.z * helperSinArcAngle) + (helperRemainingUnbentLength * helperCosArcAngle);
+				finalPos.x = (helperOriginVector.x - (finalPos.z * helperSinArcAngle)) + (helperRemainingUnbentLength * helperCosArcAngle);
 
 				break;
 
 			case BendDeformerAxis::BEND_DEFORMER_AXIS_Y:
-				finalPos.z = origPos.z;
-
 				helperOriginVector = {-helperRadius, 0, 0};
 				helperOriginVector = rotateBy(helperOriginVector, Vector(0, 0, 1), -helperArcAngle);
 
-				finalPos.x = helperOriginVector.x + (origPos.x * helperCosArcAngle) + (helperRemainingUnbentLength * helperSinArcAngle) + helperRadius;
+				finalPos.x = helperOriginVector.x + (finalPos.x * helperCosArcAngle) + (helperRemainingUnbentLength * helperSinArcAngle) + helperRadius;
 
-				finalPos.y = helperOriginVector.y - (origPos.x * helperSinArcAngle) + (helperRemainingUnbentLength * helperCosArcAngle);
+				finalPos.y = (helperOriginVector.y - (finalPos.x * helperSinArcAngle)) + (helperRemainingUnbentLength * helperCosArcAngle);
 
 				break;
 
 			case BendDeformerAxis::BEND_DEFORMER_AXIS_Z:
 			default:
-				finalPos.x = origPos.x;
-
 				helperOriginVector = {0, -helperRadius, 0};
 				helperOriginVector = rotateBy(helperOriginVector, Vector(1, 0, 0), -helperArcAngle);
 
-				finalPos.y = helperOriginVector.y + (origPos.y * helperCosArcAngle) + (helperRemainingUnbentLength * helperSinArcAngle) + helperRadius;
+				finalPos.y = helperOriginVector.y + (finalPos.y * helperCosArcAngle) + (helperRemainingUnbentLength * helperSinArcAngle) + helperRadius;
 
-				finalPos.z = helperOriginVector.z - (origPos.y * helperSinArcAngle) + (helperRemainingUnbentLength * helperCosArcAngle);
+				finalPos.z = (helperOriginVector.z - (finalPos.y * helperSinArcAngle)) + (helperRemainingUnbentLength * helperCosArcAngle);
 
 				break;
 			}
