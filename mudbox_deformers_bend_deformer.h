@@ -97,16 +97,36 @@ public:
 	 */
 	void closeEvent(QCloseEvent *event);
 
+	/**
+	 * Updates the internal cache for the original point positions. Use this when
+	 * you are "saving" the current state of the mesh for restore operations.
+	 */
 	void updateOriginalPointPositions();
 
+	/**
+	 * Resets the GUI slider widgets to their default values.
+	 */
 	void resetSliders();
 
+	/**
+	 * Same as ``resetSliders``, except that the GUI sliders will be reset while
+	 * preserving the existing edits made to the mesh.
+	 */
 	void resetSlidersWithoutAffectingGeometry();
 
+	/**
+	 * Checks if there is geometry selected in the active session and brings up a
+	 * GUI dialog to warn the user if there isn't.
+	 *
+	 * @return 	``true``if there is geometry selected, ``false`` otherwise.
+	 */
 	bool checkActiveGeometrySelection();
 
-	void checkActiveGeometrySelectionAndUpdateCache();
-
+	/**
+	 * Resets the geometry to its original positions using the internal cache.
+	 *
+	 * @return 	The status code.
+	 */
 	BendDeformerStatus resetGeometryPositions();
 
 public slots:

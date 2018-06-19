@@ -248,14 +248,6 @@ bool BendDeformer::checkActiveGeometrySelection()
 }
 
 
-void BendDeformer::checkActiveGeometrySelectionAndUpdateCache()
-{
-	if (!checkActiveGeometrySelection()) {
-		updateOriginalPointPositions();
-	}
-}
-
-
 BendDeformerStatus BendDeformer::resetGeometryPositions()
 {
 	Geometry *currentActiveGeo = Kernel()->Scene()->ActiveGeometry();
@@ -521,8 +513,6 @@ void BendDeformer::resetCB()
 	resetSliders();
 
 	resetGeometryPositions();
-
-	checkActiveGeometrySelectionAndUpdateCache();
 
 	updateSubdivisionLevel(activeSubdivLevel);
 }
