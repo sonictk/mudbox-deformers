@@ -1,35 +1,55 @@
 #include "mudbox_deformers_spherify_deformer.h"
-#include <ssmath/ss_common_math.h>
+#include "mudbox_deformers_util.h"
+
+#include <cassert>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+
 #include <QtCore/Qt>
 #include <QtGui/QGroupBox>
 #include <QtGui/QHBoxLayout>
+#include <QtGui/QLabel>
+#include <QtGui/QMessageBox>
 #include <QtGui/QPushButton>
 #include <QtGui/QSlider>
 #include <QtGui/QVBoxLayout>
-#include <QtGui/QLabel>
 
+
+using mudbox::Attribute;
+using mudbox::AxisAlignedBoundingBox;
+using mudbox::Geometry;
 using mudbox::Interface;
 using mudbox::Kernel;
 using mudbox::Mesh;
+using mudbox::MeshChange;
+using mudbox::MeshRenderer;
 using mudbox::Node;
+using mudbox::NodeEventType;
+using mudbox::Scene;
+using mudbox::SceneMembershipEventNotifier;
+using mudbox::SubdivisionLevel;
+using mudbox::TreeNode;
+using mudbox::Vector;
+using mudbox::aevent;
+using mudbox::afloatr;
+using mudbox::aptr;
 using mudbox::etEventTriggered;
+using mudbox::etPointerContentChanged;
 using mudbox::etPointerTargetDestroyed;
 using mudbox::etValueChanged;
-using mudbox::SubdivisionLevel;
-using mudbox::MeshChange;
-using mudbox::Vector;
-using mudbox::AxisAlignedBoundingBox;
+
 using std::malloc;
 using std::strlen;
+using std::vector;
 
 
 // NOTE: (sonictk) For Mudbox RTTI system
 IMPLEMENT_CLASS(SpherifyDeformer, TreeNode, SPHERIFY_DEFORMER_NAME)
 
 const char *SpherifyDeformer::displayName = SPHERIFY_DEFORMER_NAME;
+
+const float SpherifyDeformer::defaultWeight = 0.0f;
 
 
 SpherifyDeformer::SpherifyDeformer() : Node(SPHERIFY_DEFORMER_NAME),
@@ -44,7 +64,7 @@ SpherifyDeformer::SpherifyDeformer() : Node(SPHERIFY_DEFORMER_NAME),
 
 	int nameLen = int(strlen(SPHERIFY_DEFORMER_NAME)) + findNumberOfDigits(NUM_OF_SPHERIFY_DEFORMER_NODES);
 	char *nodeName = (char *)malloc(sizeof(char) * nameLen + 1);
-	snprintf(nodeName, sizet(nameLen), "%s%d", SPHERIFY_DEFORMER_NAME, NUM_OF_SPHERIFY_DEFORMER_NODES);
+	snprintf(nodeName, size_t(nameLen), "%s%d", SPHERIFY_DEFORMER_NAME, NUM_OF_SPHERIFY_DEFORMER_NODES);
 	QString nodeNameQS(nodeName);
 	SetName(nodeNameQS);
 	SetDisplayName(QString(displayName));
@@ -52,44 +72,43 @@ SpherifyDeformer::SpherifyDeformer() : Node(SPHERIFY_DEFORMER_NAME),
 	free(nodeName);
 
 	targetMesh.m_sNullString = QString("Select a mesh");
-	spherifyWeight = 1.0f;
+
+	spherifyWeight.SetValue(defaultWeight);
+
+	// TODO: (sonictk) Connect the scene member event to the global one so that
+	// we can catch the deletion event of the target mesh if it happens and delete
+	// this node as well
+	// sceneEvent.Connect(Kernel()->Scene()->SceneMembershipEvent);
 }
 
 
 QWidget *SpherifyDeformer::CreatePropertiesWindow(QWidget *parent)
 {
+	unsigned int numOfGeos = Kernel()->Scene()->GeometryCount();
+	if (numOfGeos == 0) {
+		Kernel()->Interface()->MessageBox(Interface::msgError,
+										  "No meshes available to deform!",
+										  "There are no meshes in the scene to deform!");
+
+		return NULL;
+	}
+
+	Geometry *activeGeo = Kernel()->Scene()->ActiveGeometry();
+	if (activeGeo != NULL) {
+		targetMesh = activeGeo;
+		updateOriginalPointPositions();
+	}
+
 	QWidget *propertiesWidget = TreeNode::CreatePropertiesWindow(parent);
 
-	// TODO: (sonictk) Figure out why Mudbox keeps references to these widgets and
-	// where, since stack alloc crashes after widget closure
+	// NOTE: (sonictk) Since stack alloc crashes after widget closure, we have to allocate on heap.
 	QVBoxLayout *mainLayout = new QVBoxLayout;
-	QHBoxLayout *btnLayout = new QHBoxLayout;
-
-	QLabel *weightLabel = new QLabel("Weight");
-	QGroupBox *grpSettings = new QGroupBox("Spherify settings");
-	QVBoxLayout *grpSettingsLayout = new QVBoxLayout;
-	QHBoxLayout *weightLayout = new QHBoxLayout;
-	QSlider *sliderWeight = new QSlider(Qt::Horizontal);
-	sliderWeight->setRange(0, 100);
-
 	QPushButton *closeBtn = new QPushButton("Close");
 
+	mainLayout->addWidget(closeBtn);
+
+	// NOTE: (sonictk) Without the widget holder, nothing shows up
 	QWidget *widgetHolder = new QWidget;
-
-	propertiesWidget->setWindowTitle(DisplayName());
-
-	weightLayout->addWidget(weightLabel);
-	weightLayout->addWidget(sliderWeight);
-	grpSettingsLayout->addLayout(weightLayout);
-	grpSettings->setLayout(grpSettingsLayout);
-
-	btnLayout->addWidget(closeBtn);
-
-	mainLayout->addWidget(grpSettings);
-	mainLayout->addLayout(btnLayout);
-
-	// TODO: (sonictk) Figure out why without the widget holder, nothing shows up
-	// TODO: (sonictk) Figure out why there's blank space at the top of the widget
 	widgetHolder->setLayout(mainLayout);
 
 	propertiesWidget->connect(closeBtn,
@@ -97,75 +116,166 @@ QWidget *SpherifyDeformer::CreatePropertiesWindow(QWidget *parent)
 							  propertiesWidget,
 							  SLOT(reject()));
 
+	propertiesWidget->setWindowTitle(DisplayName());
 	propertiesWidget->layout()->addWidget(widgetHolder);
-
 	propertiesWidget->show();
+
+	// NOTE: (sonictk) We do this becauase the Mudbox widget attribute holder doesn't
+	// resize to its contents automatically
+	propertiesWidget->setMinimumHeight(propertiesWidget->height() + 50);
 
 	return propertiesWidget;
 }
 
 
-void SpherifyDeformer::spherifyCB()
+void SpherifyDeformer::updateOriginalPointPositions()
 {
-	if (targetMesh == 0) {
-		Kernel()->Interface()->MessageBox(Interface::msgError,
-										  QString("Cannot apply deformation!"),
-										  QString("Please select a mesh first from the drop-down menu!"));
-		return;
+	origPtPositions.clear();
+	SubdivisionLevel *currentSubdivisionLevel = targetMesh->ActiveLevel();
+	AxisAlignedBoundingBox bBox = currentSubdivisionLevel->BoundingBox(false);
+	unsigned int numOfVertices = currentSubdivisionLevel->VertexCount();
+
+	for (unsigned int i=0; i < numOfVertices; ++i) {
+		Vector pos = currentSubdivisionLevel->VertexPosition(i);
+		origPtPositions.push_back(pos);
 	}
 
+	origBBoxMaxLength = bBox.Size();
+}
+
+
+void SpherifyDeformer::spherifyCB(float weight)
+{
 	SubdivisionLevel *currentSubdivisionLevel = targetMesh->ActiveLevel();
 	unsigned int numOfVertices = currentSubdivisionLevel->VertexCount();
 
-	MeshChange *meshChanges = currentSubdivisionLevel->StartChange();
+	// NOTE: (sonictk) If the vertices no longer match, re-cache the mesh point positions.
+	if (numOfVertices != (unsigned int)origPtPositions.size()) {
+		Kernel()->Interface()->HUDMessageShow("Mis-matching vertex counts! Please "
+											  "make sure you're on the same subd level "
+											  "that you started with!");
 
-	// TODO: (sonictk) Figure out why the mesh isn't updating real-time
-	AxisAlignedBoundingBox bBox = currentSubdivisionLevel->BoundingBox(false);
-	float bBoxMaxLength = bBox.Size();
-	for (unsigned int i=0; i < numOfVertices; ++i) {
-		Vector pos = currentSubdivisionLevel->VertexPosition(i);
-		pos.SetLength(bBoxMaxLength * spherifyWeight);
-		currentSubdivisionLevel->SetVertexPosition(i, pos);
+		return;
 	}
 
-	currentSubdivisionLevel->EndChange();
+	for (unsigned int i=0; i < numOfVertices; ++i) {
+		Vector origPos = origPtPositions[i];
+		Vector newPos = Vector(origPos);
+		newPos.SetLength(origBBoxMaxLength);
+		Vector finalPos = lerp(origPos, newPos, weight);
+		currentSubdivisionLevel->SetVertexPosition(i, finalPos);
+	}
 
-	Kernel()->Interface()->RefreshUI();
+	currentSubdivisionLevel->ApplyChanges(true);
+
+	markSubdivisionLevelDirty(currentSubdivisionLevel);
+	Kernel()->ViewPort()->Redraw();
 }
 
 
 void SpherifyDeformer::OnNodeEvent(const Attribute &attribute, NodeEventType eventType)
 {
-	if (attribute == spherifyWeight) {
+	if (attribute == targetMesh) {
+		switch (eventType) {
+
+		case etPointerTargetDestroyed:
+			origPtPositions.clear();
+			origBBoxMaxLength = 0.0f;
+			break;
+
+		case etPointerContentChanged:
+		case etValueChanged:
+			if (targetMesh) {
+				updateOriginalPointPositions();
+			}
+			break;
+
+		default:
+			break;
+		}
+
+	} else if (attribute == spherifyWeight) {
 		switch (eventType) {
 		case etValueChanged: {
-			// TODO: (sonictk) Apply the deformation live and see the mesh change
-			Kernel()->Interface()->MessageBox(Interface::msgInformation,
-											  QString("Test"),
-											  QString("Test"));
+			if (!targetMesh) {
+				Kernel()->Interface()->HUDMessageShow("Please select a mesh first from the drop-down menu!");
+				return;
+			}
+
+			float weight = spherifyWeight.Value();
+			if (areFloatsEqual(weight, 0.0f)) {
+				return;
+			}
+
+			spherifyCB(weight);
+
 			break;
 		}
 		case etPointerTargetDestroyed:
 			NUM_OF_SPHERIFY_DEFORMER_NODES--;
 			break;
+
 		default:
 			break;
 		}
 
-	} else if (attribute == applyEvent && eventType == etEventTriggered) {
-		// TODO: (sonictk) Apply deformation as undoable command
-		spherifyCB();
+	} else if (attribute == applyEvent && eventType == etEventTriggered && targetMesh) {
+		SubdivisionLevel *currentSubdivisionLevel = targetMesh->ActiveLevel();
+		updateSubdivisionLevel(currentSubdivisionLevel);
+
+		return;
 
 	} else if (attribute == resetEvent && eventType == etEventTriggered) {
-		spherifyWeight = 1.0f;
-		Kernel()->Interface()->RefreshUI();
+		if (targetMesh) {
+			SubdivisionLevel *currentSubdivisionLevel = targetMesh->ActiveLevel();
+			unsigned int numOfVertices = currentSubdivisionLevel->VertexCount();
+
+			if (numOfVertices != (unsigned int)origPtPositions.size()) {
+				Kernel()->Interface()->HUDMessageShow("Mis-matching vertex counts! "
+													  "Unable to reset the original "
+													  "mesh point positions!");
+
+				return;
+			}
+
+			for (unsigned int i=0; i < numOfVertices; ++i) {
+				Vector origPos = origPtPositions[i];
+				currentSubdivisionLevel->SetVertexPosition(i, origPos);
+			}
+
+			updateSubdivisionLevel(currentSubdivisionLevel);
+		}
+
+		spherifyWeight.SetValue(defaultWeight);
 
 	} else if (attribute == deleteEvent && eventType == etEventTriggered) {
-		spherifyWeight = 0.0f;
+		if (targetMesh) {
+			SubdivisionLevel *currentSubdivisionLevel = targetMesh->ActiveLevel();
+			unsigned int numOfVertices = currentSubdivisionLevel->VertexCount();
+
+			if (numOfVertices != (unsigned int)origPtPositions.size()) {
+				Kernel()->Interface()->HUDMessageShow("Mis-matching vertex counts! "
+													  "Unable to restore the original "
+													  "mesh point positions!");
+
+				return;
+			}
+
+			for (unsigned int i=0; i < numOfVertices; ++i) {
+				Vector origPos = origPtPositions[i];
+				currentSubdivisionLevel->SetVertexPosition(i, origPos);
+			}
+
+			updateSubdivisionLevel(currentSubdivisionLevel);
+		}
 
 		// NOTE: (sonictk) Remove the node from the graph first otherwise children
 		// will have invalid sibling ptrs.
 		Kernel()->Scene()->RemoveChild(this);
+
+		// NOTE: (sonictk) If the UI is not refreshed before ``this`` is deleted,
+		// Mudbox crashes. Guess the UI holds a reference to the ``TreeNode`` class
+		// instance or something. Wonderful.
 		Kernel()->Interface()->RefreshUI();
 
 		delete this;

@@ -1,47 +1,82 @@
 /**
  * @file   mudbox_deformers_spherify_deformer.h
- * @brief
+ * @brief  Spherify deformer.
  */
 #ifndef MUDBOX_DEFORMERS_SPHERIFY_DEFORMER_H
 #define MUDBOX_DEFORMERS_SPHERIFY_DEFORMER_H
 
 #include <Mudbox/mudbox.h>
+
 #include <QtGui/QWidget>
+#include <QtGui/QSlider>
 #include <QtCore/QString>
 
-using mudbox::TreeNode;
-using mudbox::Attribute;
-using mudbox::NodeEventType;
-using mudbox::Geometry;
-using mudbox::AttributePointer;
-using mudbox::AttributeInstance;
-using mudbox::aevent;
+#include <vector>
 
 
-globalVar const char SPHERIFY_DEFORMER_NAME[] = "SpherifyDeformer";
+static const char SPHERIFY_DEFORMER_NAME[] = "SpherifyDeformer";
 
 /// This is used to keep track of how many deformers are in the scene.
-globalVar int NUM_OF_SPHERIFY_DEFORMER_NODES = 0;
+static int NUM_OF_SPHERIFY_DEFORMER_NODES = 0;
 
 
-struct SpherifyDeformer : TreeNode
+/// This is a Spherify Deformer node that appears in the Mudbox scene graph. It
+/// allows for performing a "bloat" effect on the selected mesh.
+struct SpherifyDeformer : mudbox::TreeNode
 {
 	DECLARE_CLASS // NOTE: (sonictk) Required for Mudbox RTTI system.
+
+	/// The default weight for the spherification to be applied.
+	static const float defaultWeight;
 
 	/// The display name of the node. May be translated according to language settings.
 	static const char *displayName;
 
-	aptr<Geometry> targetMesh;
+	/// The mesh selector combobox.
+	mudbox::aptr<mudbox::Geometry> targetMesh;
 
-	AttributeInstance<float> spherifyWeight;
+	/// Used for detecting when the mesh that this deformer is associated with is
+	/// deleted; cleanup of this node is performed at the same time.
+	mudbox::aptr<mudbox::SceneMembershipEventNotifier> sceneEvent;
 
-	aevent applyEvent;
-	aevent deleteEvent;
-	aevent resetEvent;
+	/// Internal storage used for the original mesh positions.
+	std::vector<mudbox::Vector> origPtPositions;
 
+	/// Internal storage for the original max. edge length of the mesh bounding box.
+	float origBBoxMaxLength;
+
+	/// The slider for the amount of spherification to apply.
+	mudbox::afloatr spherifyWeight;
+
+	/// The button for applying the spherification. (Actually updates the mesh surface)
+	mudbox::aevent applyEvent;
+
+	/// The button for removing the operation.
+	mudbox::aevent deleteEvent;
+
+	/// The button for resetting the operation.
+	mudbox::aevent resetEvent;
+
+	/**
+	 * The constructor. Creates the UI and sets up default values.
+	 *
+	 * @return		A new instance of the deformer class.
+	 */
 	SpherifyDeformer();
 
-	void spherifyCB();
+	/**
+	 * This updates the internal cache with the original positions of the mesh.
+	 * It is used for blending the spherify weights against the original mesh.
+	 */
+	void updateOriginalPointPositions();
+
+	/**
+	 * This callback is executed when the weight slider's value is changed. It is
+	 * responsible for applying the spherify operation to the mesh.
+	 *
+	 * @param weight	The amount of spherification to apply.
+	 */
+	void spherifyCB(float weight);
 
 	/**
 	 * Overridden to provide the properties window for modifying the deformer attributes.
@@ -52,8 +87,15 @@ struct SpherifyDeformer : TreeNode
 	 */
 	virtual QWidget *CreatePropertiesWindow(QWidget *parent);
 
-	virtual void OnNodeEvent(const Attribute &attribute, NodeEventType eventType);
-
+	/**
+	 * This callback is executed when UI attributes are changed. It is responsible
+	 * for executing the spherify operation.
+	 *
+	 * @param attribute	The attribute being affected.
+	 * @param eventType	The type of event being triggered.
+	 */
+	virtual void OnNodeEvent(const mudbox::Attribute &attribute,
+							 mudbox::NodeEventType eventType);
 };
 
 
