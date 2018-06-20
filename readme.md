@@ -13,6 +13,16 @@ production-ready usage.
 
 ### Requirements
 
+This plugin was developed against the following development environment(s):
+
+* Windows 10 Fall Creator's Update
+* Visual Studio 12 and Visual Studio 2017 Update 2
+
+* Ubuntu 18.04 LTS
+* GCC 7.2.0 
+
+Please see below for the officially supported compiler and OS requirements from Autodesk.
+
 #### Mudbox 2018
 
 * Qt 4.8.6 (Mudbox has its own bundled Qt version, but you'll need the Qt tools
@@ -38,13 +48,14 @@ though.*
 Tested against CMake 3.11.1.
 
 * Create a ``build`` directory and navigate to it.
+
 * Run ``cmake ../ -DCMAKE_BUILD_TYPE=Release -DMUDBOX_SDK_ROOT=<path>``, where
   ``<path>`` is where your Mudbox SDK folder is located (usually in your Mudbox
   installation root directory.) You can also specify ``MUDBOX_PLUGINS_DEPLOYMENT_PATH``
   as well if you'd like to install plugins immediately to the specified directory
   after they are built.
-* Run``cmake --build . --config Release --target install``. The binaries should
-  be installed in the ``bin`` folder.
+
+* Run``cmake --build . --config Release --target install``. 
 
 
 # Credits
