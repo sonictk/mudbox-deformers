@@ -277,6 +277,9 @@ void BendDeformer::resetSliders()
 
 	sliderBendDirection->setValue(0);
 	spinBoxBendDirectionAngle->setValue(0);
+
+	sliderBendRadius->setValue(0);
+	spinBoxBendRadius->setValue(0);
 }
 
 
@@ -288,6 +291,9 @@ void BendDeformer::resetSlidersWithoutAffectingGeometry()
 	sliderBendDirection->blockSignals(true);
 	spinBoxBendDirectionAngle->blockSignals(true);
 
+	sliderBendRadius->blockSignals(true);
+	spinBoxBendRadius->blockSignals(true);
+
 	resetSliders();
 
 	spinBoxBendAngle->blockSignals(false);
@@ -295,6 +301,9 @@ void BendDeformer::resetSlidersWithoutAffectingGeometry()
 
 	spinBoxBendDirectionAngle->blockSignals(false);
 	sliderBendDirection->blockSignals(false);
+
+	sliderBendRadius->blockSignals(false);
+	spinBoxBendRadius->blockSignals(false);
 }
 
 
@@ -388,7 +397,6 @@ void BendDeformer::bendCB(int angle)
 
 	float helperRadius = bendAngle < 0.0f ? -bendRadius : bendRadius;
 
-	// TODO: (sonictk) Bend is not perfect, maybe bend radius?
 	for (unsigned int i=0; i < numOfVertices; ++i) {
 		Vector origPos = origPtPositions[i];
 		Vector finalPos = Vector(origPos);
@@ -441,14 +449,17 @@ void BendDeformer::bendCB(int angle)
 
 		} else {
 			Vector helperOriginVector;
+			float tmpValue;
 			switch (bendAxis) {
 			case BendDeformerAxis::BEND_DEFORMER_AXIS_X:
 				helperOriginVector = {0, 0, -helperRadius};
 				helperOriginVector = rotateBy(helperOriginVector, Vector(0, 1, 0), -helperArcAngle);
 
-				finalPos.z = helperOriginVector.z + (finalPos.z * helperCosArcAngle) + (helperRemainingUnbentLength * helperSinArcAngle) + helperRadius;
+				tmpValue = helperOriginVector.z + (finalPos.z * helperCosArcAngle) + (helperRemainingUnbentLength * helperSinArcAngle) + helperRadius;
 
 				finalPos.x = (helperOriginVector.x - (finalPos.z * helperSinArcAngle)) + (helperRemainingUnbentLength * helperCosArcAngle);
+
+				finalPos.z = tmpValue;
 
 				break;
 
@@ -456,9 +467,11 @@ void BendDeformer::bendCB(int angle)
 				helperOriginVector = {-helperRadius, 0, 0};
 				helperOriginVector = rotateBy(helperOriginVector, Vector(0, 0, 1), -helperArcAngle);
 
-				finalPos.x = helperOriginVector.x + (finalPos.x * helperCosArcAngle) + (helperRemainingUnbentLength * helperSinArcAngle) + helperRadius;
+				tmpValue = helperOriginVector.x + (finalPos.x * helperCosArcAngle) + (helperRemainingUnbentLength * helperSinArcAngle) + helperRadius;
 
 				finalPos.y = (helperOriginVector.y - (finalPos.x * helperSinArcAngle)) + (helperRemainingUnbentLength * helperCosArcAngle);
+
+				finalPos.x = tmpValue;
 
 				break;
 
@@ -467,9 +480,11 @@ void BendDeformer::bendCB(int angle)
 				helperOriginVector = {0, -helperRadius, 0};
 				helperOriginVector = rotateBy(helperOriginVector, Vector(1, 0, 0), -helperArcAngle);
 
-				finalPos.y = helperOriginVector.y + (finalPos.y * helperCosArcAngle) + (helperRemainingUnbentLength * helperSinArcAngle) + helperRadius;
+				tmpValue = helperOriginVector.y + (finalPos.y * helperCosArcAngle) + (helperRemainingUnbentLength * helperSinArcAngle) + helperRadius;
 
 				finalPos.z = (helperOriginVector.z - (finalPos.y * helperSinArcAngle)) + (helperRemainingUnbentLength * helperCosArcAngle);
+
+				finalPos.y = tmpValue;
 
 				break;
 			}
@@ -563,24 +578,45 @@ void BendDeformer::setBendRangeEndAngleCB(int angle)
 void BendDeformer::bendRadiusCB(int radius)
 {
 	bendRadiusOffset = (float)radius;
+
+	spinBoxBendRadius->blockSignals(true);
+	spinBoxBendRadius->setValue(radius);
+	spinBoxBendRadius->blockSignals(false);
+
+	int bendAngle = sliderBendAngle->value();
+	bendCB(bendAngle);
 }
 
 
 void BendDeformer::setBendRadiusMinCB(int radius)
 {
-	// TODO: (sonictk)
+	int maxRadius = spinBoxBendRadiusMax->value();
+	if (radius >= maxRadius) {
+		radius = maxRadius - 1;
+		spinBoxBendRadiusMin->setValue(radius);
+	}
+
+	sliderBendRadius->setMinimum(radius);
+	spinBoxBendRadius->setMinimum(radius);
 }
 
 
 void BendDeformer::setBendRadiusMaxCB(int radius)
 {
-	// TODO: (sonictk)
+	int minRadius = spinBoxBendRadiusMin->value();
+	if (radius <= minRadius) {
+		radius = minRadius + 1;
+		spinBoxBendRadius->setValue(radius);
+	}
+
+	sliderBendRadius->setMaximum(radius);
+	spinBoxBendRadius->setMaximum(radius);
 }
 
 
 void BendDeformer::setBendRadiusCB(int radius)
 {
-	// TODO: (sonictk)
+	sliderBendRadius->setValue(radius);
 }
 
 
