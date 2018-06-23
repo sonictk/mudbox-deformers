@@ -40,4 +40,9 @@ void initializer()
 											"Spherify",
 											SpherifyDeformer::StaticClass(),
 											"New Spherify Operation");
+
+	Kernel()->Interface()->AddCallbackMenuItem(deformersMenuName,
+											   "Noise",
+											   "Apply noise",
+											   showNoiseDeformerUI);
 }
