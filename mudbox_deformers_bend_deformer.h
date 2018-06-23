@@ -55,10 +55,13 @@ public:
 	/// The maximum bend angle limit.
 	int bendAngleMax;
 
+	/// The minimum bend radius.
 	int bendRadiusMin;
 
+	/// The maximum bend radius.
 	int bendRadiusMax;
 
+	/// The additional offset to apply to the bend radius during deformation.
 	float bendRadiusOffset;
 
 	/// Storage for the original positions of the mesh before the deformation application.
@@ -95,12 +98,16 @@ public:
 	/// Widget that allows for selection of bend direction angle.
 	QSlider *sliderBendDirection;
 
+	/// Widget that allows for setting the min. bend radius.
 	QSpinBox *spinBoxBendRadiusMin;
 
+	/// Widget that allows for setting the max. bend radius.
 	QSpinBox *spinBoxBendRadiusMax;
 
+	/// Widget that allows for setting the bend radius.
 	QSpinBox *spinBoxBendRadius;
 
+	/// Slider that allows for setting the bend radius.
 	QSlider *sliderBendRadius;
 
 	/**
@@ -175,26 +182,83 @@ public slots:
 	 */
 	void bendDirectionCB(int angle);
 
+	/**
+	 * This callback is triggered when the user adjusts the bend direction angle in the UI.
+	 *
+	 * @param angle 	The value selected in the UI field.
+	 */
 	void setBendDirectionAngleCB(int angle);
 
+	/**
+	 * This callback is triggered when the user adjusts the start bend direction angle in the UI.
+	 *
+	 * @param angle	The value selected in the UI field.
+	 */
 	void setBendDirectionStartAngleCB(int angle);
 
+	/**
+	 * This callback is triggered when the user adjusts the end bend direction angle in the UI.
+	 *
+	 * @param angle	The value selected in the UI field.
+	 */
 	void setBendDirectionEndAngleCB(int angle);
 
+	/**
+	 * This callback is triggered when the user adjusts the start bend angle in the UI.
+	 *
+	 * @param angle	The value selected in the UI field.
+	 */
 	void setBendRangeStartAngleCB(int angle);
 
+	/**
+	 * This callback is triggered when the user adjusts the end bend angle in the UI.
+	 *
+	 * @param angle	The value selected in the UI field.
+	 */
 	void setBendRangeEndAngleCB(int angle);
 
+	/**
+	 * This callback is triggered when the user moves the radius slider in the UI.
+	 *
+	 * @param radius	The value selected in the UI slider. Serves as the radius
+	 * 				of the resulting bend operation.
+	 */
 	void bendRadiusCB(int radius);
 
+	/**
+	 * This callback is triggered when the user adjusts the min. bend angle in the UI.
+	 *
+	 * @param radius	The value selected in the UI field.
+	 */
 	void setBendRadiusMinCB(int radius);
 
+	/**
+	 * This callback is triggered when the user adjusts the max. bend angle in the UI.
+	 *
+	 * @param radius	The value selected in the UI field.
+	 */
 	void setBendRadiusMaxCB(int radius);
 
+	/**
+	 * This callback is triggered when the user sets the bend angle in the UI.
+	 *
+	 * @param radius	The value selected in the UI field.
+	 */
 	void setBendRadiusCB(int radius);
 
+	/**
+	 * This callback is triggered when the **Apply** button is clicked in the UI.
+	 * It is responsible for applying the results of the deformation to the mesh
+	 * and updating the internal cached data of the UI.
+	 */
 	void applyCB();
 
+	/**
+	 * This callback is triggered when the **Reset** button is clicked in the UI.
+	 * It is responsible for resetting the bend operation being performed, along
+	 * with resetting the UI to its default state.
+	 *
+	 */
 	void resetCB();
 };
 
