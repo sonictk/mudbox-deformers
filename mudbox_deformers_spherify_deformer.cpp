@@ -64,7 +64,7 @@ SpherifyDeformer::SpherifyDeformer() : Node(SPHERIFY_DEFORMER_NAME),
 
 	int nameLen = int(strlen(SPHERIFY_DEFORMER_NAME)) + findNumberOfDigits(NUM_OF_SPHERIFY_DEFORMER_NODES);
 	char *nodeName = (char *)malloc(sizeof(char) * nameLen + 1);
-	snprintf(nodeName, size_t(nameLen), "%s%d", SPHERIFY_DEFORMER_NAME, NUM_OF_SPHERIFY_DEFORMER_NODES);
+	sprintf(nodeName, "%s%d", SPHERIFY_DEFORMER_NAME, NUM_OF_SPHERIFY_DEFORMER_NODES);
 	QString nodeNameQS(nodeName);
 	SetName(nodeNameQS);
 	SetDisplayName(QString(displayName));
