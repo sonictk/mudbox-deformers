@@ -71,7 +71,7 @@ elseif(LINUX)
 
 elseif(WINDOWS)
     # using Visual Studio on Windows
-    set(CMAKE_CXX_FLAGS "/GS /W3 /Zc:wchar_t /Zc:inline /fp:precise /errorReport:none /WX- /EHsc /nologo /MP /arch:AVX2 /std:c++14")
+    set(CMAKE_CXX_FLAGS "/GS /W3 /Zc:wchar_t /Zc:inline /fp:precise /errorReport:none /WX- /EHsc /nologo /MP /arch:AVX2 /wd4996")
     set(CMAKE_CXX_FLAGS_RELEASE "/Ox /Oi /GL /MD")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} /Zi /Od /MDd")
 
