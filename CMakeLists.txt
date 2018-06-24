@@ -9,6 +9,7 @@
 
 # Official Autodesk recommended compiler versions for Mudbox 2018
 # Windows is Windows 7 and Visual Studio 12
+# (But it looks like Visual Studio 11 is what most of the existing plugins are compiled against)
 # Mac OS is OSX 10.9.2 Xcode 6.1
 # Linux 2.6.32 GCC 4.4.6-3
 
@@ -71,7 +72,7 @@ elseif(LINUX)
 
 elseif(WINDOWS)
     # using Visual Studio on Windows
-    set(CMAKE_CXX_FLAGS "/GS /W3 /Zc:wchar_t /Zc:inline /fp:precise /errorReport:none /WX- /EHsc /nologo /MP /arch:AVX2 /wd4996")
+    set(CMAKE_CXX_FLAGS "/GS /W3 /Zc:wchar_t /fp:precise /errorReport:none /WX- /EHsc /nologo /MP /wd4996")
     set(CMAKE_CXX_FLAGS_RELEASE "/Ox /Oi /GL /MD")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} /Zi /Od /MDd")
 

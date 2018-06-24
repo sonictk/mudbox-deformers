@@ -452,7 +452,7 @@ void BendDeformer::bendCB(int angle)
 			float tmpValue;
 			switch (bendAxis) {
 			case BendDeformerAxis::BEND_DEFORMER_AXIS_X:
-				helperOriginVector = {0, 0, -helperRadius};
+				helperOriginVector = Vector(0, 0, -helperRadius);
 				helperOriginVector = rotateBy(helperOriginVector, Vector(0, 1, 0), -helperArcAngle);
 
 				tmpValue = helperOriginVector.z + (finalPos.z * helperCosArcAngle) + (helperRemainingUnbentLength * helperSinArcAngle) + helperRadius;
@@ -464,7 +464,7 @@ void BendDeformer::bendCB(int angle)
 				break;
 
 			case BendDeformerAxis::BEND_DEFORMER_AXIS_Y:
-				helperOriginVector = {-helperRadius, 0, 0};
+				helperOriginVector = Vector(-helperRadius, 0, 0);
 				helperOriginVector = rotateBy(helperOriginVector, Vector(0, 0, 1), -helperArcAngle);
 
 				tmpValue = helperOriginVector.x + (finalPos.x * helperCosArcAngle) + (helperRemainingUnbentLength * helperSinArcAngle) + helperRadius;
@@ -477,7 +477,7 @@ void BendDeformer::bendCB(int angle)
 
 			case BendDeformerAxis::BEND_DEFORMER_AXIS_Z:
 			default:
-				helperOriginVector = {0, -helperRadius, 0};
+				helperOriginVector = Vector(0, -helperRadius, 0);
 				helperOriginVector = rotateBy(helperOriginVector, Vector(1, 0, 0), -helperArcAngle);
 
 				tmpValue = helperOriginVector.y + (finalPos.y * helperCosArcAngle) + (helperRemainingUnbentLength * helperSinArcAngle) + helperRadius;
