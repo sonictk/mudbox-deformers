@@ -1,6 +1,6 @@
 /**
  * @file   mudbox_deformers_bend_deformer.h
- * @brief
+ * @brief  Bend deformer UI.
  */
 #ifndef MUDBOX_DEFORMERS_BEND_DEFORMER_H
 #define MUDBOX_DEFORMERS_BEND_DEFORMER_H

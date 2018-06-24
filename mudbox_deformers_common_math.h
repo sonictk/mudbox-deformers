@@ -1,3 +1,8 @@
+/**
+ * @file   mudbox_deformers_common_math.h
+ * @brief  Basic math utilities.
+ */
+
 #ifndef MUDBOX_DEFORMERS_COMMON_MATH_H
 #define MUDBOX_DEFORMERS_COMMON_MATH_H
 
