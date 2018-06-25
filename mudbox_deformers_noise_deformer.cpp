@@ -1,4 +1,5 @@
 #include "mudbox_deformers_util.h"
+#include "mudbox_deformers_noise.h"
 #include "mudbox_deformers_noise_deformer.h"
 
 #include <QtGui/QGroupBox>
@@ -20,12 +21,13 @@ const QString NoiseDeformer::objName = "noiseDeformerUI";
 
 
 NoiseDeformer::NoiseDeformer(QWidget *parent, Qt::WindowFlags flags) :
+		QWidget(parent, flags),
 		weightMin(0),
 		weightMax(100),
-		weight(0),
+		defaultWeight(0),
 		octavesMin(1),
 		octavesMax(10),
-		octaves(1)
+		defaultOctaves(1)
 {
 	Geometry *activeGeo = Kernel()->Scene()->ActiveGeometry();
 	if (!activeGeo) {
@@ -61,12 +63,12 @@ NoiseDeformer::NoiseDeformer(QWidget *parent, Qt::WindowFlags flags) :
 
 	spinBoxWeight = new QSpinBox(this);
 	spinBoxWeight->setRange(weightMin, weightMax);
-	spinBoxWeight->setValue(weight);
+	spinBoxWeight->setValue(defaultWeight);
 
 	sliderWeight = new QSlider(this);
 	sliderWeight->setOrientation(Qt::Horizontal);
 	sliderWeight->setRange(weightMin, weightMax);
-	sliderWeight->setValue(weight);
+	sliderWeight->setValue(defaultWeight);
 
 	// NOTE: (sonictk) Perlin octave widgets
 	QLabel *labelPerlinOctaves = new QLabel("Octaves");
@@ -81,12 +83,12 @@ NoiseDeformer::NoiseDeformer(QWidget *parent, Qt::WindowFlags flags) :
 
 	spinBoxOctaves = new QSpinBox(this);
 	spinBoxOctaves->setRange(octavesMin, octavesMax);
-	spinBoxOctaves->setValue(octaves);
+	spinBoxOctaves->setValue(defaultOctaves);
 
 	sliderOctaves = new QSlider(this);
 	sliderOctaves->setOrientation(Qt::Horizontal);
 	sliderOctaves->setRange(octavesMin, octavesMax);
-	sliderOctaves->setValue(octaves);
+	sliderOctaves->setValue(defaultOctaves);
 
 	QGridLayout *perlinSettingsLayout = new QGridLayout;
 	perlinSettingsLayout->addWidget(labelPerlinWeight, 0, 0);
@@ -255,6 +257,40 @@ void NoiseDeformer::closeEvent(QCloseEvent *event)
 }
 
 
+NoiseDeformerStatus NoiseDeformer::deform(float weight, int octaves)
+{
+	if (areFloatsEqual(weight, 0.0f)) {
+		return NoiseDeformerStatus::NOISE_DEFORMER_STATUS_SUCCESS;
+	}
+
+	if (!checkIfNoGeometrySelectedAndDisplayWarning()) {
+		return NoiseDeformerStatus::NOISE_DEFORMER_STATUS_NO_GEOMETRY_SELECTED;
+	}
+
+	checkActiveGeometryAndUpdateCache();
+
+	if (!activeSubdivLevel) {
+		return NoiseDeformerStatus::NOISE_DEFORMER_STATUS_NO_ACTIVE_SUBDIV_LEVEL;
+	}
+
+	unsigned int numOfVertices = activeSubdivLevel->VertexCount();
+	for (unsigned int i=0; i < numOfVertices; ++i) {
+		Vector origPos = origPtPositions[i];
+		Vector finalPos = Vector(origPos);
+
+		float perlinFactor = perlin(finalPos.x, finalPos.y, finalPos.z, -1);
+
+		finalPos *= 1.0f + (perlinFactor * weight);
+
+		activeSubdivLevel->SetVertexPosition(i, finalPos);
+	}
+
+	quickUpdateSubdivisionLevel(activeSubdivLevel);
+
+	return NoiseDeformerStatus::NOISE_DEFORMER_STATUS_SUCCESS;
+}
+
+
 void NoiseDeformer::applyCB()
 {
 	resetSlidersWithoutAffectingGeometry();
@@ -285,21 +321,7 @@ void NoiseDeformer::weightChangedCB(int weight)
 	spinBoxWeight->setValue(weight);
 	spinBoxWeight->blockSignals(false);
 
-	if (weight == 0) {
-		return;
-	}
-
-	if (!checkIfNoGeometrySelectedAndDisplayWarning()) {
-		return;
-	}
-
-	checkActiveGeometryAndUpdateCache();
-
-	if (!activeSubdivLevel) {
-		return;
-	}
-
-// TODO: (sonictk)
+	deform(float(sliderWeight->value()) / 100.0f, sliderOctaves->value());
 }
 
 
@@ -341,7 +363,7 @@ void NoiseDeformer::octavesChangedCB(int octaves)
 	spinBoxOctaves->setValue(octaves);
 	spinBoxOctaves->blockSignals(false);
 
-// TODO: (sonictk)
+	deform(float(sliderWeight->value()) / 100.0f, sliderOctaves->value());
 }
 
 

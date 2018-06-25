@@ -32,23 +32,6 @@ float perlinGradient(int hash, float x, float y, float z);
 
 
 /**
- * Increments the given ``num`` while ensuring repetition for perlin noise.
- *
- * @param num		The number to increment.
- * @param repeat	Number of repeats of perlin noise desired.
- *
- * @return			The appropriate number for the number of repetitions desired.
- */
-inline int perlinIncrement(int num, int repeat)
-{
-	num++;
-	if (repeat > 0) num %= repeat;
-
-	return num;
-}
-
-
-/**
  * Function to generate perlin noise for given coordinate.
  *
  * @param x 	The X coordinate.

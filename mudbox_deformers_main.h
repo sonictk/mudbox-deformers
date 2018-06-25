@@ -14,6 +14,7 @@
 #include "mudbox_deformers_eventhandler_node.cpp"
 #include "mudbox_deformers_spherify_deformer.cpp"
 #include "mudbox_deformers_bend_deformer.cpp"
+#include "mudbox_deformers_noise.cpp"
 #include "mudbox_deformers_noise_deformer.cpp"
 
 

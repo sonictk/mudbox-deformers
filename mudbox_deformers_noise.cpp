@@ -42,7 +42,6 @@ float perlinGradient(int hash, float x, float y, float z)
 float perlin(float x, float y, float z, int repeat)
 {
 	// NOTE: (sonictk) Original implementation of perlin noise from: https://mrl.nyu.edu/%7Eperlin/noise/
-	// Improved implementation referenced from: http://flafla2.github.io/2014/08/09/perlinnoise.html
 
 	// Hash lookup table
 	static int permutation[] = {
@@ -68,96 +67,45 @@ float perlin(float x, float y, float z, int repeat)
 		141, 128, 195, 78,  66,  215, 61,  156, 180
 	};
 
-	// Double the permutation array to avoid overflow.
 	static int p[512];
-	for (int i=0; i < 512; ++i) {
-		p[x] = permutation[x%256];
-	}
 
-	// For repeat, change coordinates to their "local" repetitions.
-	if (repeat > 0) {
-		x = x % repeat;
-		y = y % repeat;
-		z = z % repeat;
+	// Double the permutation to avoid overflow.
+	for (int i=0; i < 512; ++i) {
+		p[i] = permutation[i % 256];
 	}
 
 	// Find unit cube that contains point.
-	int xi = (int)floor(x) & 255; // Truncate down to 8 bit
-	int yi = (int)floor(y) & 255;
-	int zi = (int)floor(z) & 255;
+	int X = (int)floor(x) & 255;
+	int Y = (int)floor(y) & 255;
+	int Z = (int)floor(z) & 255;
 
-	// Find relative xyz of point in cube.
-	float xf = x - floor(x);
-	float yf = y - floor(y);
-	float zf = z - floor(z);
+	// Find relative x, y, z of point in cube.
+	x -= floor(x);
+	y -= floor(y);
+	z -= floor(z);
 
-	// Compute fade location for xyz.
+	// Compute fade curves for each of x, y, z.
 	float u = perlinFade(x);
 	float v = perlinFade(y);
 	float w = perlinFade(z);
 
 	// Hash coordinates of the 8 cube corners.
-	int aaa, aba, aab, abb, baa, bba, bab, bbb;
-
-	aaa = p[p[p[                xi         ] +                 yi         ] +                 zi         ];
-	aba = p[p[p[                xi         ] + perlinIncrement(yi, repeat)] +                 zi         ];
-	aab = p[p[p[                xi         ] +                 yi         ] + perlinIncrement(zi, repeat)];
-	abb = p[p[p[                xi         ] + perlinIncrement(yi, repeat)] + perlinIncrement(zi, repeat)];
-	baa = p[p[p[perlinIncrement(xi, repeat)] +                 yi         ] +                 zi         ];
-	bba = p[p[p[perlinIncrement(xi, repeat)] + perlinIncrement(yi, repeat)] +                 zi         ];
-	bab = p[p[p[perlinIncrement(xi, repeat)] +                 yi         ] + perlinIncrement(zi, repeat)];
-	bbb = p[p[p[perlinIncrement(xi, repeat)] + perlinIncrement(yi, repeat)] + perlinIncrement(zi, repeat)];
+	int A  = p[X] + Y;
+	int AA = p[A] + Z;
+	int AB = p[A + 1] + Z;
+	int B  = p[X + 1] + Y;
+	int BA = p[B] + Z;
+	int BB = p[B + 1] + Z;
 
 	// Add blended results from 8 corners of the cube.
-	float x1, x2, y1, y2;
-
-	// The gradient function calculates the dot product between a pseudorandom
-	// gradient vector and the vector from the input coordinate to the 8
-	// surrounding points in its unit cube.  This is all then lerped together as
-	// a sort of weighted average based on the faded (u,v,w) values we made
-	// earlier.
-	x1 = lerp(perlinGradient(aaa, xf, yf, zf),
-			  perlinGradient(baa, xf - 1.0f, yf, zf),
-			  u);
-
-	x2 = lerp(perlinGradient(aba, xf, yf - 1.0f, zf),
-			  perlinGradient(bba, xf - 1.0f, yf - 1.0f, zf),
-			  u);
-
-	y1 = lerp(x1, x2, v);
-
-	x1 = lerp(perlinGradient(aab, xf, yf, zf - 1.0f),
-			  perlinGradient(bab, xf - 1.0f, yf, zf - 1.0f),
-			  u);
-
-	x2 = lerp(perlinGradient(abb, xf, yf - 1.0f, zf - 1.0f),
-			  perlinGradient(bbb, xf - 1.0f, yf - 1.0f, zf - 1.0f),
-			  u);
-
-	y2 = lerp(x1, x2, v);
-
-	// For convenience we bound it to 0 - 1 (theoretical min/max before is -1 - 1)
-	return (lerp(y1, y2, w) + 1.0f) / 2.0f;
-}
-
-
-float perlinOctave(float x, float y, float z, int octaves, float persistence, int repeat)
-{
-	float total = 0.0f;
-	float frequency = 1.0f;
-	float amplitude = 1.0f;
-
-	// Used for normalizing result to 0.0 - 1.0
-	float maxValue = 0.0f;
-
-	for (int i=0; i < octaves; i++) {
-		total += perlin(x * frequency, y * frequency, z * frequency, repeat) * amplitude;
-
-		maxValue += amplitude;
-
-		amplitude *= persistence;
-		frequency *= 2.0f;
-	}
-
-	return total / maxValue;
+	return lerp(
+	    lerp(lerp(perlinGradient(p[AA], x, y, z), perlinGradient(p[BA], x - 1, y, z), u),
+	         lerp(perlinGradient(p[AB], x, y - 1, z), perlinGradient(p[BB], x - 1, y - 1, z), u),
+	         v),
+	    lerp(lerp(perlinGradient(p[AA + 1], x, y, z - 1),
+	              perlinGradient(p[BA + 1], x - 1, y, z - 1), u),
+	         lerp(perlinGradient(p[AB + 1], x, y - 1, z - 1),
+	              perlinGradient(p[BB + 1], x - 1, y - 1, z - 1), u),
+	         v),
+	    w);
 }

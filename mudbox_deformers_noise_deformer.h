@@ -21,6 +21,8 @@ enum NoiseDeformerStatus
 {
 	NOISE_DEFORMER_STATUS_FAILURE = INT_MIN,
 	NOISE_DEFORMER_STATUS_MISMATCHED_SUBDIV_LEVEL,
+	NOISE_DEFORMER_STATUS_NO_ACTIVE_SUBDIV_LEVEL,
+	NOISE_DEFORMER_STATUS_NO_GEOMETRY_SELECTED,
 	NOISE_DEFORMER_STATUS_SUCCESS = 0
 };
 
@@ -41,11 +43,11 @@ public:
 
 	int weightMin;
 	int weightMax;
-	int weight;
+	int defaultWeight;
 
 	int octavesMin;
 	int octavesMax;
-	int octaves;
+	int defaultOctaves;
 
 	mudbox::SubdivisionLevel *activeSubdivLevel;
 
@@ -76,6 +78,8 @@ public:
 	bool checkActiveGeometryAndUpdateCache();
 
 	void closeEvent(QCloseEvent *event);
+
+	NoiseDeformerStatus deform(float weight, int octaves);
 
 public slots:
 	void applyCB();
