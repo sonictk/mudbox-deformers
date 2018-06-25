@@ -1,9 +1,17 @@
+#include "mudbox_deformers_util.h"
 #include "mudbox_deformers_noise_deformer.h"
 
 #include <QtGui/QGroupBox>
 #include <QtGui/QHBoxLayout>
 #include <QtGui/QLabel>
 #include <QtGui/QVBoxLayout>
+#include <QtGui/QWidget>
+#include <QtGui/QGridLayout>
+
+#include <Mudbox/mudbox.h>
+
+using mudbox::Geometry;
+using mudbox::SubdivisionLevel;
 
 
 NoiseDeformer *NoiseDeformer::existingWidget = NULL;
@@ -40,8 +48,6 @@ NoiseDeformer::NoiseDeformer(QWidget *parent, Qt::WindowFlags flags) :
 
 	QGroupBox *grpNoiseSettings = new QGroupBox("Noise settings");
 
-	QVBoxLayout *noiseSettingsLayout = new QVBoxLayout;
-
 	// NOTE: (sonictk) Perlin weight widgets
 	QLabel *labelPerlinWeight = new QLabel("Weight");
 
@@ -61,13 +67,6 @@ NoiseDeformer::NoiseDeformer(QWidget *parent, Qt::WindowFlags flags) :
 	sliderWeight->setOrientation(Qt::Horizontal);
 	sliderWeight->setRange(weightMin, weightMax);
 	sliderWeight->setValue(weight);
-
-	QHBoxLayout *perlinWeightLayout = new QHBoxLayout;
-	perlinWeightLayout->addWidget(labelPerlinWeight);
-	perlinWeightLayout->addWidget(spinBoxWeightMin);
-	perlinWeightLayout->addWidget(sliderWeight);
-	perlinWeightLayout->addWidget(spinBoxWeightMax);
-	perlinWeightLayout->addWidget(spinBoxWeight);
 
 	// NOTE: (sonictk) Perlin octave widgets
 	QLabel *labelPerlinOctaves = new QLabel("Octaves");
@@ -89,17 +88,20 @@ NoiseDeformer::NoiseDeformer(QWidget *parent, Qt::WindowFlags flags) :
 	sliderOctaves->setRange(octavesMin, octavesMax);
 	sliderOctaves->setValue(octaves);
 
-	QHBoxLayout *perlinOctavesLayout = new QHBoxLayout;
-	perlinOctavesLayout->addWidget(labelPerlinOctaves);
-	perlinOctavesLayout->addWidget(spinBoxOctavesMin);
-	perlinOctavesLayout->addWidget(sliderOctaves);
-	perlinOctavesLayout->addWidget(spinBoxOctavesMax);
-	perlinOctavesLayout->addWidget(spinBoxOctaves);
+	QGridLayout *perlinSettingsLayout = new QGridLayout;
+	perlinSettingsLayout->addWidget(labelPerlinWeight, 0, 0);
+	perlinSettingsLayout->addWidget(spinBoxWeightMin, 0, 1);
+	perlinSettingsLayout->addWidget(sliderWeight, 0, 2);
+	perlinSettingsLayout->addWidget(spinBoxWeightMax, 0, 3);
+	perlinSettingsLayout->addWidget(spinBoxWeight, 0, 4);
 
-	noiseSettingsLayout->addLayout(perlinWeightLayout);
-	noiseSettingsLayout->addLayout(perlinOctavesLayout);
+	perlinSettingsLayout->addWidget(labelPerlinOctaves, 1, 0);
+	perlinSettingsLayout->addWidget(spinBoxOctavesMin, 1, 1);
+	perlinSettingsLayout->addWidget(sliderOctaves, 1, 2);
+	perlinSettingsLayout->addWidget(spinBoxOctavesMax, 1, 3);
+	perlinSettingsLayout->addWidget(spinBoxOctaves, 1, 4);
 
-	grpNoiseSettings->setLayout(noiseSettingsLayout);
+	grpNoiseSettings->setLayout(perlinSettingsLayout);
 
 	mainLayout->addWidget(grpNoiseSettings);
 
@@ -118,6 +120,34 @@ NoiseDeformer::NoiseDeformer(QWidget *parent, Qt::WindowFlags flags) :
 
 	result = connect(btnReset, SIGNAL(released()), this, SLOT(resetCB()));
 	assert(result == true);
+
+	// NOTE: (sonictk) Signals for the weight group
+	result = connect(sliderWeight, SIGNAL(valueChanged(int)), this, SLOT(weightChangedCB(int)));
+	assert(result == true);
+
+	result = connect(spinBoxWeight, SIGNAL(valueChanged(int)), this, SLOT(setWeightCB(int)));
+	assert(result == true);
+
+	result = connect(spinBoxWeightMin, SIGNAL(valueChanged(int)), this, SLOT(setMinWeightCB(int)));
+	assert(result == true);
+
+	result = connect(spinBoxWeightMax, SIGNAL(valueChanged(int)), this, SLOT(setMaxWeightCB(int)));
+	assert(result == true);
+
+	// NOTE: (sonictk) Signals for the octaves group
+	result = connect(sliderOctaves, SIGNAL(valueChanged(int)), this, SLOT(octavesChangedCB(int)));
+	assert(result == true);
+
+	result = connect(spinBoxOctaves, SIGNAL(valueChanged(int)), this, SLOT(setOctavesCB(int)));
+	assert(result == true);
+
+	result = connect(spinBoxOctavesMin, SIGNAL(valueChanged(int)), this, SLOT(setMinOctavesCB(int)));
+	assert(result == true);
+
+	result = connect(spinBoxOctavesMax, SIGNAL(valueChanged(int)), this, SLOT(setMaxOctavesCB(int)));
+	assert(result == true);
+
+	updateOriginalPointPositions();
 }
 
 
@@ -127,15 +157,223 @@ NoiseDeformer::~NoiseDeformer()
 }
 
 
+void NoiseDeformer::resetSliders()
+{
+	sliderWeight->setValue(0);
+	spinBoxWeight->setValue(0);
+
+	sliderOctaves->setValue(0);
+	spinBoxOctaves->setValue(0);
+}
+
+
+NoiseDeformerStatus NoiseDeformer::resetGeometryPositions()
+{
+	Geometry *currentActiveGeo = Kernel()->Scene()->ActiveGeometry();
+	SubdivisionLevel *currentSubdivLevel = currentActiveGeo->ActiveLevel();
+
+	if (!currentActiveGeo || currentSubdivLevel != activeSubdivLevel) {
+		return NoiseDeformerStatus::NOISE_DEFORMER_STATUS_MISMATCHED_SUBDIV_LEVEL;
+	}
+
+	unsigned int numOfVertices = currentSubdivLevel->VertexCount();
+
+	for (unsigned int i=0; i < numOfVertices; ++i) {
+		activeSubdivLevel->SetVertexPosition(i, origPtPositions[i]);
+	}
+
+	return NoiseDeformerStatus::NOISE_DEFORMER_STATUS_SUCCESS;
+}
+
+
+void NoiseDeformer::updateOriginalPointPositions()
+{
+	Geometry *activeGeo = Kernel()->Scene()->ActiveGeometry();
+	if (!activeGeo) {
+		return;
+	}
+
+	origPtPositions.clear();
+	activeSubdivLevel = activeGeo->ActiveLevel();
+	unsigned int numOfVertices = activeSubdivLevel->VertexCount();
+
+	for (unsigned int i=0; i < numOfVertices; ++i) {
+		Vector pos = activeSubdivLevel->VertexPosition(i);
+		origPtPositions.push_back(pos);
+	}
+}
+
+
+void NoiseDeformer::resetSlidersWithoutAffectingGeometry()
+{
+	sliderWeight->blockSignals(true);
+	spinBoxWeight->blockSignals(true);
+
+	sliderOctaves->blockSignals(true);
+	spinBoxOctaves->blockSignals(true);
+
+	resetSliders();
+
+	sliderWeight->blockSignals(false);
+	spinBoxWeight->blockSignals(false);
+
+	sliderOctaves->blockSignals(false);
+	spinBoxOctaves->blockSignals(false);
+}
+
+
+bool NoiseDeformer::checkActiveGeometryAndUpdateCache()
+{
+	Geometry *activeGeo = Kernel()->Scene()->ActiveGeometry();
+	if (!activeGeo) {
+		activeSubdivLevel = NULL;
+
+		return true;
+	}
+
+	SubdivisionLevel *currentSubdivLevel = activeGeo->ActiveLevel();
+
+	if (currentSubdivLevel != activeSubdivLevel) {
+		updateOriginalPointPositions();
+
+		return true;
+	}
+
+	return false;
+}
+
+
+void NoiseDeformer::closeEvent(QCloseEvent *event)
+{
+	resetSliders();
+
+	resetGeometryPositions();
+
+	updateSubdivisionLevel(activeSubdivLevel);
+
+	QWidget::closeEvent(event);
+}
+
+
 void NoiseDeformer::applyCB()
 {
-	// TODO: (sonictk)
+	resetSlidersWithoutAffectingGeometry();
+
+	if (!checkIfNoGeometrySelectedAndDisplayWarning()) {
+		return;
+	}
+
+	updateSubdivisionLevel(activeSubdivLevel);
+
+	updateOriginalPointPositions();
 }
 
 
 void NoiseDeformer::resetCB()
 {
-	// TODO: (sonictk)
+	resetSliders();
+
+	resetGeometryPositions();
+
+	updateSubdivisionLevel(activeSubdivLevel);
+}
+
+
+void NoiseDeformer::weightChangedCB(int weight)
+{
+	spinBoxWeight->blockSignals(true);
+	spinBoxWeight->setValue(weight);
+	spinBoxWeight->blockSignals(false);
+
+	if (weight == 0) {
+		return;
+	}
+
+	if (!checkIfNoGeometrySelectedAndDisplayWarning()) {
+		return;
+	}
+
+	checkActiveGeometryAndUpdateCache();
+
+	if (!activeSubdivLevel) {
+		return;
+	}
+
+// TODO: (sonictk)
+}
+
+
+void NoiseDeformer::setWeightCB(int weight)
+{
+	sliderWeight->setValue(weight);
+}
+
+
+void NoiseDeformer::setMinWeightCB(int weight)
+{
+	int weightMax = spinBoxWeightMax->value();
+	if (weight >= weightMax) {
+		weight = weightMax - 1;
+		spinBoxWeightMin->setValue(weight);
+	}
+
+	sliderWeight->setMinimum(weight);
+	spinBoxWeight->setMinimum(weight);
+}
+
+
+void NoiseDeformer::setMaxWeightCB(int weight)
+{
+	int weightMin = spinBoxWeightMin->value();
+	if (weight <= weightMin) {
+		weight = weightMin + 1;
+		spinBoxWeightMax->setValue(weight);
+	}
+
+	sliderWeight->setMaximum(weight);
+	spinBoxWeight->setMaximum(weight);
+}
+
+
+void NoiseDeformer::octavesChangedCB(int octaves)
+{
+	spinBoxOctaves->blockSignals(true);
+	spinBoxOctaves->setValue(octaves);
+	spinBoxOctaves->blockSignals(false);
+
+// TODO: (sonictk)
+}
+
+
+void NoiseDeformer::setOctavesCB(int octaves)
+{
+	sliderOctaves->setValue(octaves);
+}
+
+
+void NoiseDeformer::setMinOctavesCB(int octaves)
+{
+	int octavesMax = spinBoxOctavesMax->value();
+	if (octaves >= octavesMax) {
+		octaves = octavesMax - 1;
+		spinBoxOctavesMin->setValue(octaves);
+	}
+
+	sliderOctaves->setMinimum(octaves);
+	spinBoxOctaves->setMinimum(octaves);
+}
+
+
+void NoiseDeformer::setMaxOctavesCB(int octaves)
+{
+	int octavesMin = spinBoxOctavesMin->value();
+	if (octaves <= octavesMin) {
+		octaves = octavesMin + 1;
+		spinBoxOctavesMax->setValue(octaves);
+	}
+
+	sliderOctaves->setMaximum(octaves);
+	spinBoxOctaves->setMaximum(octaves);
 }
 
 

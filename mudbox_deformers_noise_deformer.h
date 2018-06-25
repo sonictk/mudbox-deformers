@@ -17,6 +17,15 @@
 #include <Mudbox/mudbox.h>
 
 
+enum NoiseDeformerStatus
+{
+	NOISE_DEFORMER_STATUS_FAILURE = INT_MIN,
+	NOISE_DEFORMER_STATUS_MISMATCHED_SUBDIV_LEVEL,
+	NOISE_DEFORMER_STATUS_SUCCESS = 0
+};
+
+
+
 struct NoiseDeformer : public QWidget
 {
 	Q_OBJECT
@@ -38,6 +47,10 @@ public:
 	int octavesMax;
 	int octaves;
 
+	mudbox::SubdivisionLevel *activeSubdivLevel;
+
+	std::vector<mudbox::Vector> origPtPositions;
+
 	QSpinBox *spinBoxWeight;
 	QSpinBox *spinBoxWeightMin;
 	QSpinBox *spinBoxWeightMax;
@@ -50,11 +63,41 @@ public:
 
 	QSlider *sliderOctaves;
 
+	void resetSliders();
+
+	NoiseDeformerStatus resetGeometryPositions();
+
+	void updateOriginalPointPositions();
+
+	void checkActiveGeometrySelection();
+
+	void resetSlidersWithoutAffectingGeometry();
+
+	bool checkActiveGeometryAndUpdateCache();
+
+	void closeEvent(QCloseEvent *event);
+
+public slots:
 	void applyCB();
 
 	void resetCB();
-};
 
+	void weightChangedCB(int weight);
+
+	void setWeightCB(int weight);
+
+	void setMinWeightCB(int weight);
+
+	void setMaxWeightCB(int weight);
+
+	void octavesChangedCB(int octaves);
+
+	void setOctavesCB(int octaves);
+
+	void setMinOctavesCB(int octaves);
+
+	void setMaxOctavesCB(int octaves);
+};
 
 
 /**
