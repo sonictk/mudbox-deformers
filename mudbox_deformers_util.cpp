@@ -1,8 +1,12 @@
 #include "mudbox_deformers_util.h"
 
+#include <Mudbox/mudbox.h>
+
 using mudbox::Kernel;
 using mudbox::SubdivisionLevel;
 using mudbox::MeshRenderer;
+using mudbox::Geometry;
+using mudbox::Interface;
 
 
 void markSubdivisionLevelDirty(SubdivisionLevel *subdivLevel)
@@ -41,4 +45,18 @@ void quickUpdateSubdivisionLevel(SubdivisionLevel *subdivLevel)
 	markSubdivisionLevelDirty(subdivLevel);
 
 	Kernel()->ViewPort()->Redraw();
+}
+
+
+bool checkIfNoGeometrySelectedAndDisplayWarning()
+{
+	Geometry *currentActiveGeo = Kernel()->Scene()->ActiveGeometry();
+	if (!currentActiveGeo) {
+		Kernel()->Interface()->MessageBox(Interface::msgError,
+										  "No mesh selected!",
+										  "You need to select a mesh first!");
+		return false;
+	}
+
+	return true;
 }

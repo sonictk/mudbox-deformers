@@ -37,4 +37,12 @@ void updateSubdivisionLevel(mudbox::SubdivisionLevel *subdivLevel);
 void quickUpdateSubdivisionLevel(mudbox::SubdivisionLevel *subdivLevel);
 
 
+/**
+ * Checks if there is active geometry being selected. If not, displays a GUI dialog.
+ *
+ * @return	``true`` if geometry is selected, ``false`` otherwise.
+ */
+bool checkIfNoGeometrySelectedAndDisplayWarning();
+
+
 #endif /* MUDBOX_DEFORMERS_UTIL_H */

@@ -154,6 +154,7 @@ public:
 
 	/**
 	 * Resets the geometry to its original positions using the internal cache.
+
 	 *
 	 * @return 	The status code.
 	 */
