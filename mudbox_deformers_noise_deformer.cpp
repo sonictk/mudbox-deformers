@@ -259,10 +259,6 @@ void NoiseDeformer::closeEvent(QCloseEvent *event)
 
 NoiseDeformerStatus NoiseDeformer::deform(float weight, int octaves)
 {
-	if (areFloatsEqual(weight, 0.0f)) {
-		return NoiseDeformerStatus::NOISE_DEFORMER_STATUS_SUCCESS;
-	}
-
 	if (!checkIfNoGeometrySelectedAndDisplayWarning()) {
 		return NoiseDeformerStatus::NOISE_DEFORMER_STATUS_NO_GEOMETRY_SELECTED;
 	}

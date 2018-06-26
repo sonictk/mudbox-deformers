@@ -98,13 +98,13 @@ float perlin(float x, float y, float z, int repeat)
 	int BB = p[B + 1] + Z;
 
 	// Add blended results from 8 corners of the cube.
-	return lerp(
-	    lerp(lerp(perlinGradient(p[AA], x, y, z), perlinGradient(p[BA], x - 1, y, z), u),
-	         lerp(perlinGradient(p[AB], x, y - 1, z), perlinGradient(p[BB], x - 1, y - 1, z), u),
+	return qlerp(
+	    qlerp(qlerp(perlinGradient(p[AA], x, y, z), perlinGradient(p[BA], x - 1, y, z), u),
+	         qlerp(perlinGradient(p[AB], x, y - 1, z), perlinGradient(p[BB], x - 1, y - 1, z), u),
 	         v),
-	    lerp(lerp(perlinGradient(p[AA + 1], x, y, z - 1),
+	    qlerp(qlerp(perlinGradient(p[AA + 1], x, y, z - 1),
 	              perlinGradient(p[BA + 1], x - 1, y, z - 1), u),
-	         lerp(perlinGradient(p[AB + 1], x, y - 1, z - 1),
+	         qlerp(perlinGradient(p[AB + 1], x, y - 1, z - 1),
 	              perlinGradient(p[BB + 1], x - 1, y - 1, z - 1), u),
 	         v),
 	    w);
