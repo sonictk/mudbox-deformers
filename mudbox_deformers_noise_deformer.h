@@ -45,9 +45,9 @@ public:
 	int weightMax;
 	int defaultWeight;
 
-	int octavesMin;
-	int octavesMax;
-	int defaultOctaves;
+	int frequencyMin;
+	int frequencyMax;
+	int defaultFrequency;
 
 	mudbox::SubdivisionLevel *activeSubdivLevel;
 
@@ -59,11 +59,11 @@ public:
 
 	QSlider *sliderWeight;
 
-	QSpinBox *spinBoxOctaves;
-	QSpinBox *spinBoxOctavesMin;
-	QSpinBox *spinBoxOctavesMax;
+	QSpinBox *spinBoxFrequency;
+	QSpinBox *spinBoxFrequencyMin;
+	QSpinBox *spinBoxFrequencyMax;
 
-	QSlider *sliderOctaves;
+	QSlider *sliderFrequency;
 
 	void resetSliders();
 
@@ -79,7 +79,7 @@ public:
 
 	void closeEvent(QCloseEvent *event);
 
-	NoiseDeformerStatus deform(float weight, int octaves);
+	NoiseDeformerStatus deform(float weight, int frequency);
 
 public slots:
 	void applyCB();
@@ -94,13 +94,13 @@ public slots:
 
 	void setMaxWeightCB(int weight);
 
-	void octavesChangedCB(int octaves);
+	void frequencyChangedCB(int frequency);
 
-	void setOctavesCB(int octaves);
+	void setFrequencyCB(int frequency);
 
-	void setMinOctavesCB(int octaves);
+	void setMinFrequencyCB(int frequency);
 
-	void setMaxOctavesCB(int octaves);
+	void setMaxFrequencyCB(int frequency);
 };
 
 

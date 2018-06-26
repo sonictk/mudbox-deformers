@@ -39,7 +39,7 @@ float perlinGradient(int hash, float x, float y, float z)
 }
 
 
-float perlin(float x, float y, float z, int repeat)
+float perlin(float x, float y, float z)
 {
 	// NOTE: (sonictk) Original implementation of perlin noise from: https://mrl.nyu.edu/%7Eperlin/noise/
 
@@ -108,4 +108,24 @@ float perlin(float x, float y, float z, int repeat)
 	              perlinGradient(p[BB + 1], x - 1, y - 1, z - 1), u),
 	         v),
 	    w);
+}
+
+
+float perlinOctave(float x, float y, float z, int octaves, float persistence)
+{
+	float total = 0;
+	float frequency = 1;
+	float amplitude = 1;
+	float maxValue = 0; // Used for normalizing result to 0.0 - 1.0
+
+	for (int i = 0; i < frequency; i++) {
+		total += perlin(x * frequency, y * frequency, z * frequency) * amplitude;
+
+		maxValue += amplitude;
+
+		amplitude *= persistence;
+		frequency *= 2;
+	}
+
+	return total / maxValue;
 }

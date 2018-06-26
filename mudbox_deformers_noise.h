@@ -43,4 +43,7 @@ float perlinGradient(int hash, float x, float y, float z);
 float perlin(float x, float y, float z);
 
 
+float perlinOctave(float x, float y, float z, int octaves, float persistence);
+
+
 #endif /* MUDBOX_DEFORMERS_NOISE_H */

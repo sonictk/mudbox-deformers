@@ -25,9 +25,9 @@ NoiseDeformer::NoiseDeformer(QWidget *parent, Qt::WindowFlags flags) :
 		weightMin(0),
 		weightMax(100),
 		defaultWeight(0),
-		octavesMin(1),
-		octavesMax(10),
-		defaultOctaves(1)
+		frequencyMin(1),
+		frequencyMax(100),
+		defaultFrequency(1)
 {
 	Geometry *activeGeo = Kernel()->Scene()->ActiveGeometry();
 	if (!activeGeo) {
@@ -71,24 +71,24 @@ NoiseDeformer::NoiseDeformer(QWidget *parent, Qt::WindowFlags flags) :
 	sliderWeight->setValue(defaultWeight);
 
 	// NOTE: (sonictk) Perlin octave widgets
-	QLabel *labelPerlinOctaves = new QLabel("Octaves");
+	QLabel *labelPerlinFrequency = new QLabel("Frequency");
 
-	spinBoxOctavesMin = new QSpinBox(this);
-	spinBoxOctavesMin->setRange(octavesMin, octavesMax);
-	spinBoxOctavesMin->setValue(octavesMin);
+	spinBoxFrequencyMin = new QSpinBox(this);
+	spinBoxFrequencyMin->setRange(frequencyMin, frequencyMax);
+	spinBoxFrequencyMin->setValue(frequencyMin);
 
-	spinBoxOctavesMax = new QSpinBox(this);
-	spinBoxOctavesMax->setRange(octavesMin, octavesMax);
-	spinBoxOctavesMax->setValue(octavesMax);
+	spinBoxFrequencyMax = new QSpinBox(this);
+	spinBoxFrequencyMax->setRange(frequencyMin, frequencyMax);
+	spinBoxFrequencyMax->setValue(frequencyMax);
 
-	spinBoxOctaves = new QSpinBox(this);
-	spinBoxOctaves->setRange(octavesMin, octavesMax);
-	spinBoxOctaves->setValue(defaultOctaves);
+	spinBoxFrequency = new QSpinBox(this);
+	spinBoxFrequency->setRange(frequencyMin, frequencyMax);
+	spinBoxFrequency->setValue(defaultFrequency);
 
-	sliderOctaves = new QSlider(this);
-	sliderOctaves->setOrientation(Qt::Horizontal);
-	sliderOctaves->setRange(octavesMin, octavesMax);
-	sliderOctaves->setValue(defaultOctaves);
+	sliderFrequency = new QSlider(this);
+	sliderFrequency->setOrientation(Qt::Horizontal);
+	sliderFrequency->setRange(frequencyMin, frequencyMax);
+	sliderFrequency->setValue(defaultFrequency);
 
 	QGridLayout *perlinSettingsLayout = new QGridLayout;
 	perlinSettingsLayout->addWidget(labelPerlinWeight, 0, 0);
@@ -97,11 +97,11 @@ NoiseDeformer::NoiseDeformer(QWidget *parent, Qt::WindowFlags flags) :
 	perlinSettingsLayout->addWidget(spinBoxWeightMax, 0, 3);
 	perlinSettingsLayout->addWidget(spinBoxWeight, 0, 4);
 
-	perlinSettingsLayout->addWidget(labelPerlinOctaves, 1, 0);
-	perlinSettingsLayout->addWidget(spinBoxOctavesMin, 1, 1);
-	perlinSettingsLayout->addWidget(sliderOctaves, 1, 2);
-	perlinSettingsLayout->addWidget(spinBoxOctavesMax, 1, 3);
-	perlinSettingsLayout->addWidget(spinBoxOctaves, 1, 4);
+	perlinSettingsLayout->addWidget(labelPerlinFrequency, 1, 0);
+	perlinSettingsLayout->addWidget(spinBoxFrequencyMin, 1, 1);
+	perlinSettingsLayout->addWidget(sliderFrequency, 1, 2);
+	perlinSettingsLayout->addWidget(spinBoxFrequencyMax, 1, 3);
+	perlinSettingsLayout->addWidget(spinBoxFrequency, 1, 4);
 
 	grpNoiseSettings->setLayout(perlinSettingsLayout);
 
@@ -136,17 +136,17 @@ NoiseDeformer::NoiseDeformer(QWidget *parent, Qt::WindowFlags flags) :
 	result = connect(spinBoxWeightMax, SIGNAL(valueChanged(int)), this, SLOT(setMaxWeightCB(int)));
 	assert(result == true);
 
-	// NOTE: (sonictk) Signals for the octaves group
-	result = connect(sliderOctaves, SIGNAL(valueChanged(int)), this, SLOT(octavesChangedCB(int)));
+	// NOTE: (sonictk) Signals for the frequency group
+	result = connect(sliderFrequency, SIGNAL(valueChanged(int)), this, SLOT(frequencyChangedCB(int)));
 	assert(result == true);
 
-	result = connect(spinBoxOctaves, SIGNAL(valueChanged(int)), this, SLOT(setOctavesCB(int)));
+	result = connect(spinBoxFrequency, SIGNAL(valueChanged(int)), this, SLOT(setFrequencyCB(int)));
 	assert(result == true);
 
-	result = connect(spinBoxOctavesMin, SIGNAL(valueChanged(int)), this, SLOT(setMinOctavesCB(int)));
+	result = connect(spinBoxFrequencyMin, SIGNAL(valueChanged(int)), this, SLOT(setMinFrequencyCB(int)));
 	assert(result == true);
 
-	result = connect(spinBoxOctavesMax, SIGNAL(valueChanged(int)), this, SLOT(setMaxOctavesCB(int)));
+	result = connect(spinBoxFrequencyMax, SIGNAL(valueChanged(int)), this, SLOT(setMaxFrequencyCB(int)));
 	assert(result == true);
 
 	updateOriginalPointPositions();
@@ -164,8 +164,8 @@ void NoiseDeformer::resetSliders()
 	sliderWeight->setValue(0);
 	spinBoxWeight->setValue(0);
 
-	sliderOctaves->setValue(0);
-	spinBoxOctaves->setValue(0);
+	sliderFrequency->setValue(0);
+	spinBoxFrequency->setValue(0);
 }
 
 
@@ -211,16 +211,16 @@ void NoiseDeformer::resetSlidersWithoutAffectingGeometry()
 	sliderWeight->blockSignals(true);
 	spinBoxWeight->blockSignals(true);
 
-	sliderOctaves->blockSignals(true);
-	spinBoxOctaves->blockSignals(true);
+	sliderFrequency->blockSignals(true);
+	spinBoxFrequency->blockSignals(true);
 
 	resetSliders();
 
 	sliderWeight->blockSignals(false);
 	spinBoxWeight->blockSignals(false);
 
-	sliderOctaves->blockSignals(false);
-	spinBoxOctaves->blockSignals(false);
+	sliderFrequency->blockSignals(false);
+	spinBoxFrequency->blockSignals(false);
 }
 
 
@@ -257,7 +257,7 @@ void NoiseDeformer::closeEvent(QCloseEvent *event)
 }
 
 
-NoiseDeformerStatus NoiseDeformer::deform(float weight, int octaves)
+NoiseDeformerStatus NoiseDeformer::deform(float weight, int frequency)
 {
 	if (!checkIfNoGeometrySelectedAndDisplayWarning()) {
 		return NoiseDeformerStatus::NOISE_DEFORMER_STATUS_NO_GEOMETRY_SELECTED;
@@ -274,7 +274,9 @@ NoiseDeformerStatus NoiseDeformer::deform(float weight, int octaves)
 		Vector origPos = origPtPositions[i];
 		Vector finalPos = Vector(origPos);
 
-		float perlinFactor = perlin(finalPos.x, finalPos.y, finalPos.z, -1);
+		float perlinFactor = perlin(finalPos.x / frequency,
+									finalPos.y / frequency,
+									finalPos.z / frequency);
 
 		finalPos *= 1.0f + (perlinFactor * weight);
 
@@ -317,7 +319,7 @@ void NoiseDeformer::weightChangedCB(int weight)
 	spinBoxWeight->setValue(weight);
 	spinBoxWeight->blockSignals(false);
 
-	deform(float(sliderWeight->value()) / 100.0f, sliderOctaves->value());
+	deform(float(sliderWeight->value()) / 100.0f, sliderFrequency->value());
 }
 
 
@@ -353,45 +355,45 @@ void NoiseDeformer::setMaxWeightCB(int weight)
 }
 
 
-void NoiseDeformer::octavesChangedCB(int octaves)
+void NoiseDeformer::frequencyChangedCB(int frequency)
 {
-	spinBoxOctaves->blockSignals(true);
-	spinBoxOctaves->setValue(octaves);
-	spinBoxOctaves->blockSignals(false);
+	spinBoxFrequency->blockSignals(true);
+	spinBoxFrequency->setValue(frequency);
+	spinBoxFrequency->blockSignals(false);
 
-	deform(float(sliderWeight->value()) / 100.0f, sliderOctaves->value());
+	deform(float(sliderWeight->value()) / 100.0f, sliderFrequency->value());
 }
 
 
-void NoiseDeformer::setOctavesCB(int octaves)
+void NoiseDeformer::setFrequencyCB(int frequency)
 {
-	sliderOctaves->setValue(octaves);
+	sliderFrequency->setValue(frequency);
 }
 
 
-void NoiseDeformer::setMinOctavesCB(int octaves)
+void NoiseDeformer::setMinFrequencyCB(int frequency)
 {
-	int octavesMax = spinBoxOctavesMax->value();
-	if (octaves >= octavesMax) {
-		octaves = octavesMax - 1;
-		spinBoxOctavesMin->setValue(octaves);
+	int frequencyMax = spinBoxFrequencyMax->value();
+	if (frequency >= frequencyMax) {
+		frequency = frequencyMax - 1;
+		spinBoxFrequencyMin->setValue(frequency);
 	}
 
-	sliderOctaves->setMinimum(octaves);
-	spinBoxOctaves->setMinimum(octaves);
+	sliderFrequency->setMinimum(frequency);
+	spinBoxFrequency->setMinimum(frequency);
 }
 
 
-void NoiseDeformer::setMaxOctavesCB(int octaves)
+void NoiseDeformer::setMaxFrequencyCB(int frequency)
 {
-	int octavesMin = spinBoxOctavesMin->value();
-	if (octaves <= octavesMin) {
-		octaves = octavesMin + 1;
-		spinBoxOctavesMax->setValue(octaves);
+	int frequencyMin = spinBoxFrequencyMin->value();
+	if (frequency <= frequencyMin) {
+		frequency = frequencyMin + 1;
+		spinBoxFrequencyMax->setValue(frequency);
 	}
 
-	sliderOctaves->setMaximum(octaves);
-	spinBoxOctaves->setMaximum(octaves);
+	sliderFrequency->setMaximum(frequency);
+	spinBoxFrequency->setMaximum(frequency);
 }
 
 
