@@ -13,6 +13,7 @@
 
 using mudbox::Geometry;
 using mudbox::SubdivisionLevel;
+using mudbox::Vertex;
 
 
 NoiseDeformer *NoiseDeformer::existingWidget = NULL;
@@ -257,6 +258,21 @@ void NoiseDeformer::closeEvent(QCloseEvent *event)
 }
 
 
+void NoiseDeformer::deformPoint(unsigned int index, float weight, int frequency)
+{
+	Vector origPos = origPtPositions[index];
+	Vector finalPos = Vector(origPos);
+
+	float perlinFactor = perlin(finalPos.x / frequency,
+								finalPos.y / frequency,
+								finalPos.z / frequency);
+
+	finalPos *= 1.0f + (perlinFactor * weight);
+
+	activeSubdivLevel->SetVertexPosition(index, finalPos);
+}
+
+
 NoiseDeformerStatus NoiseDeformer::deform(float weight, int frequency)
 {
 	if (!checkIfNoGeometrySelectedAndDisplayWarning()) {
@@ -269,18 +285,24 @@ NoiseDeformerStatus NoiseDeformer::deform(float weight, int frequency)
 		return NoiseDeformerStatus::NOISE_DEFORMER_STATUS_NO_ACTIVE_SUBDIV_LEVEL;
 	}
 
+	// NOTE: (sonictk) If there is an active vertex selection, only apply the
+	// deformation to those vertices. Else, apply it to all vertices.
 	unsigned int numOfVertices = activeSubdivLevel->VertexCount();
-	for (unsigned int i=0; i < numOfVertices; ++i) {
-		Vector origPos = origPtPositions[i];
-		Vector finalPos = Vector(origPos);
 
-		float perlinFactor = perlin(finalPos.x / frequency,
-									finalPos.y / frequency,
-									finalPos.z / frequency);
+	if (activeSubdivLevel->SelectedFaceCount() > 0) {
+		const Vertex *vertexDatas = activeSubdivLevel->VertexArray();
 
-		finalPos *= 1.0f + (perlinFactor * weight);
+		for (unsigned int i=0; i < numOfVertices; ++i) {
+			Vertex currentVertex = vertexDatas[i];
+			if (currentVertex.IsSelected()) {
+				deformPoint(i, weight, frequency);
+			}
+		}
 
-		activeSubdivLevel->SetVertexPosition(i, finalPos);
+	} else {
+		for (unsigned int i=0; i < numOfVertices; ++i) {
+			deformPoint(i, weight, frequency);
+		}
 	}
 
 	quickUpdateSubdivisionLevel(activeSubdivLevel);

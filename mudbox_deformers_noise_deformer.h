@@ -79,7 +79,10 @@ public:
 
 	void closeEvent(QCloseEvent *event);
 
+	void deformPoint(unsigned int index, float weight, int frequency);
+
 	NoiseDeformerStatus deform(float weight, int frequency);
+
 
 public slots:
 	void applyCB();
