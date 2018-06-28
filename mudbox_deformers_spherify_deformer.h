@@ -1,6 +1,6 @@
 /**
  * @file   mudbox_deformers_spherify_deformer.h
- * @brief  Spherify deformer.
+ * @brief  Spherify deformer UI.
  */
 #ifndef MUDBOX_DEFORMERS_SPHERIFY_DEFORMER_H
 #define MUDBOX_DEFORMERS_SPHERIFY_DEFORMER_H

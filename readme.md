@@ -16,7 +16,7 @@ production-ready usage.
 This plugin was developed against the following development environment(s):
 
 * Windows 10 Fall Creator's Update
-* Visual Studio 12 and Visual Studio 2017 Update 2
+* Visual Studio 11 2012 and Visual Studio 15 2017 Update 2
 
 * Ubuntu 18.04 LTS
 * GCC 7.2.0 
@@ -31,7 +31,7 @@ Please see below for the officially supported compiler and OS requirements from 
 ##### Windows
 
 * Windows 7
-* Visual Studio 12
+* Visual Studio 11 2012
 
 ##### Linux
 

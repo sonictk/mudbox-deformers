@@ -107,6 +107,10 @@ set(PLUGIN_SOURCES
     mudbox_deformers_spherify_deformer.cpp
     mudbox_deformers_bend_deformer.h
     mudbox_deformers_bend_deformer.cpp
+    mudbox_deformers_noise_deformer.h
+    mudbox_deformers_noise_deformer.cpp
+    mudbox_deformers_noise.h
+    mudbox_deformers_noise.cpp
     mudbox_deformers_main.h)
 
 set_source_files_properties(${PLUGIN_SOURCES} PROPERTIES HEADER_FILE_ONLY TRUE)

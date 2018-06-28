@@ -1,3 +1,8 @@
+/**
+ * @file   mudbox_deformers_common_math.h
+ * @brief  Basic math utilities.
+ */
+
 #ifndef MUDBOX_DEFORMERS_COMMON_MATH_H
 #define MUDBOX_DEFORMERS_COMMON_MATH_H
 
@@ -105,6 +110,27 @@ inline float lerp(int a, int b, float t)
 inline float lerp(unsigned int a, unsigned int b, float t)
 {
 	float result = ((1.0f - t) * (float)a) + (t * (float)b);
+
+	return result;
+}
+
+
+/**
+ * Linearly interpolate between ``a`` and ``b`` by factor ``t``.
+ * NOTE: ``qlerp`` stands for quicklerp; this is imprecise and does not guarantee
+ * result is ``v1`` when ``t`` is ``1``,
+ * due to floating-point error.
+ * May be used when the hardware has a FMA instruction.
+ *
+ * @param a 	The first value.
+ * @param b 	The second value.
+ * @param t 	The interpolation factor.
+ *
+ * @return 	The interpolated value.
+ */
+inline float qlerp(float a, float b, float factor)
+{
+	float result = a + (factor * (b - a));
 
 	return result;
 }

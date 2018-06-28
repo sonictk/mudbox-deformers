@@ -307,20 +307,6 @@ void BendDeformer::resetSlidersWithoutAffectingGeometry()
 }
 
 
-bool BendDeformer::checkActiveGeometrySelection()
-{
-	Geometry *currentActiveGeo = Kernel()->Scene()->ActiveGeometry();
-	if (!currentActiveGeo) {
-		Kernel()->Interface()->MessageBox(Interface::msgError,
-										  "No mesh selected!",
-										  "You need to select a mesh first!");
-		return false;
-	}
-
-	return true;
-}
-
-
 BendDeformerStatus BendDeformer::resetGeometryPositions()
 {
 	Geometry *currentActiveGeo = Kernel()->Scene()->ActiveGeometry();
@@ -349,7 +335,7 @@ void BendDeformer::bendCB(int angle)
 		return;
 	}
 
-	if (!checkActiveGeometrySelection()) {
+	if (!checkIfNoGeometrySelectedAndDisplayWarning()) {
 		return;
 	}
 
@@ -624,7 +610,7 @@ void BendDeformer::applyCB()
 {
 	resetSlidersWithoutAffectingGeometry();
 
-	if (!checkActiveGeometrySelection()) {
+	if (!checkIfNoGeometrySelectedAndDisplayWarning()) {
 		return;
 	}
 
