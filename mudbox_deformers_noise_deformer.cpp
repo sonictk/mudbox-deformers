@@ -11,7 +11,11 @@
 
 #include <Mudbox/mudbox.h>
 
+
 using mudbox::Geometry;
+using mudbox::Interface;
+using mudbox::Kernel;
+using mudbox::LayerMeshData;
 using mudbox::SubdivisionLevel;
 using mudbox::Vertex;
 
@@ -46,8 +50,28 @@ NoiseDeformer::NoiseDeformer(QWidget *parent, Qt::WindowFlags flags) :
 	QVBoxLayout *mainLayout = new QVBoxLayout;
 
 	QPushButton *btnApply = new QPushButton("Apply");
+
+	static const char btnApplyHelpText[] = "Bake the current deformation to the mesh.";
+	btnApply->setToolTip(btnApplyHelpText);
+	btnApply->setStatusTip(btnApplyHelpText);
+
+	QPushButton *btnApplyChangesToLayer = new QPushButton("Apply changes to layer");
+
+	static const char btnApplyChangesToLayerHelpText[] = "Bake the current deformation to a new sculpt layer.";
+	btnApplyChangesToLayer->setToolTip(btnApplyChangesToLayerHelpText);
+	btnApplyChangesToLayer->setStatusTip(btnApplyChangesToLayerHelpText);
+
 	QPushButton *btnReset = new QPushButton("Reset");
+
+	static const char btnResetHelpText[] = "Resets the mesh to its original state before deformation.";
+	btnReset->setToolTip(btnResetHelpText);
+	btnReset->setStatusTip(btnResetHelpText);
+
 	QPushButton *btnClose = new QPushButton("Close");
+
+	static const char btnCloseHelpText[] = "Closes this dialog";
+	btnClose->setToolTip(btnCloseHelpText);
+	btnClose->setStatusTip(btnCloseHelpText);
 
 	QGroupBox *grpNoiseSettings = new QGroupBox("Noise settings");
 
@@ -109,7 +133,10 @@ NoiseDeformer::NoiseDeformer(QWidget *parent, Qt::WindowFlags flags) :
 	mainLayout->addWidget(grpNoiseSettings);
 
 	mainLayout->addWidget(btnApply);
+	mainLayout->addWidget(btnApplyChangesToLayer);
+
 	mainLayout->addWidget(btnReset);
+
 	mainLayout->addWidget(btnClose);
 
 	setLayout(mainLayout);
@@ -119,6 +146,9 @@ NoiseDeformer::NoiseDeformer(QWidget *parent, Qt::WindowFlags flags) :
 	assert(result == true);
 
 	result = connect(btnApply, SIGNAL(released()), this, SLOT(applyCB()));
+	assert(result == true);
+
+	result = connect(btnApplyChangesToLayer, SIGNAL(released()), this, SLOT(applyChangesToLayerCB()));
 	assert(result == true);
 
 	result = connect(btnReset, SIGNAL(released()), this, SLOT(resetCB()));
@@ -311,6 +341,27 @@ NoiseDeformerStatus NoiseDeformer::deform(float weight, int frequency)
 }
 
 
+NoiseDeformerStatus NoiseDeformer::resetMesh()
+{
+	if (!activeSubdivLevel) {
+		return NoiseDeformerStatus::NOISE_DEFORMER_STATUS_NO_ACTIVE_SUBDIV_LEVEL;
+	}
+
+	unsigned int numOfVertices = activeSubdivLevel->VertexCount();
+	if (numOfVertices != origPtPositions.size()) {
+		return NoiseDeformerStatus::NOISE_DEFORMER_STATUS_MISMATCHED_SUBDIV_LEVEL;
+	}
+
+	for (unsigned int i=0; i < numOfVertices; ++i) {
+		activeSubdivLevel->SetVertexPosition(i, origPtPositions[i]);
+	}
+
+	updateSubdivisionLevel(activeSubdivLevel);
+
+	return NoiseDeformerStatus::NOISE_DEFORMER_STATUS_SUCCESS;
+}
+
+
 void NoiseDeformer::applyCB()
 {
 	resetSlidersWithoutAffectingGeometry();
@@ -322,6 +373,60 @@ void NoiseDeformer::applyCB()
 	updateSubdivisionLevel(activeSubdivLevel);
 
 	updateOriginalPointPositions();
+}
+
+
+void NoiseDeformer::applyChangesToLayerCB()
+{
+	if (!checkIfNoGeometrySelectedAndDisplayWarning()) {
+		return;
+	}
+
+	if (!activeSubdivLevel) {
+		return;
+	}
+
+	unsigned int numOfAffectedVertices = 0;
+	unsigned int numOfVertices = activeSubdivLevel->VertexCount();
+
+	Vector *deltas = new Vector[numOfVertices];
+
+	for (unsigned int i=0; i < numOfVertices; ++i) {
+		const Vector curPos = activeSubdivLevel->VertexPosition(i);
+		Vector origPos = origPtPositions[i];
+
+		Vector delta = curPos - origPos;
+		if (delta == Vector(0, 0, 0)) {
+			continue;
+		}
+
+		deltas[i] = delta;
+		numOfAffectedVertices++;
+	}
+
+	resetMesh();
+	resetSliders();
+
+	if (numOfAffectedVertices == 0) {
+		goto cleanup;
+	}
+
+	LayerMeshData *layerMeshData = activeSubdivLevel->AddLayer();
+	for (unsigned int j=0; j < numOfVertices; ++j) {
+		unsigned int layerVertexIndex = layerMeshData->LayerVertexIndex(j, true);
+		layerMeshData->SetVertexDelta(layerVertexIndex, j, deltas[j], true);
+	}
+
+	bool status = layerMeshData->FinishChanges();
+	if (!status) {
+		Kernel()->Interface()->MessageBox(Interface::msgError,
+										  "Failed to apply changes!",
+										  "Failed to apply changes to the sculpt layer! Please try the operation again!");
+	}
+
+cleanup:
+	delete deltas;
+	updateSubdivisionLevel(activeSubdivLevel);
 }
 
 

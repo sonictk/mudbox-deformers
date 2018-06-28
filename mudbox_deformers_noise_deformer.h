@@ -83,9 +83,12 @@ public:
 
 	NoiseDeformerStatus deform(float weight, int frequency);
 
+	NoiseDeformerStatus resetMesh();
 
 public slots:
 	void applyCB();
+
+	void applyChangesToLayerCB();
 
 	void resetCB();
 
