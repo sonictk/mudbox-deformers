@@ -378,6 +378,8 @@ void NoiseDeformer::applyCB()
 
 void NoiseDeformer::applyChangesToLayerCB()
 {
+	resetSlidersWithoutAffectingGeometry();
+
 	if (!checkIfNoGeometrySelectedAndDisplayWarning()) {
 		return;
 	}
@@ -426,7 +428,10 @@ void NoiseDeformer::applyChangesToLayerCB()
 
 cleanup:
 	delete deltas;
+
 	updateSubdivisionLevel(activeSubdivLevel);
+
+	updateOriginalPointPositions();
 }
 
 
