@@ -15,7 +15,7 @@ production-ready usage.
 
 This plugin was developed against the following development environment(s):
 
-* Windows 10 Fall Creator's Update
+* Windows 10 Fall Creator's Update Build 1703
 * Visual Studio 11 2012 and Visual Studio 15 2017 Update 2
 
 * Ubuntu 18.04 LTS

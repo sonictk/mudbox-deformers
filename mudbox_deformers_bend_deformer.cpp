@@ -248,6 +248,15 @@ bool BendDeformer::checkActiveGeometryAndUpdateCache()
 		return true;
 	}
 
+	size_t origNumPts = origPtPositions.size();
+	unsigned int curNumPts = activeSubdivLevel->VertexCount();
+
+	if (origNumPts != curNumPts) {
+		updateOriginalPointPositions();
+
+		return true;
+	}
+
 	return false;
 }
 
