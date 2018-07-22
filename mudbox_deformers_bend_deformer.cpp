@@ -241,10 +241,17 @@ bool BendDeformer::checkActiveGeometryAndUpdateCache()
 	}
 
 	SubdivisionLevel *currentSubdivLevel = activeGeo->ActiveLevel();
+
+	if (currentSubdivLevel != activeSubdivLevel) {
+		updateOriginalPointPositions();
+
+		return true;
+	}
+
 	size_t origNumPts = origPtPositions.size();
 	unsigned int curNumPts = activeSubdivLevel->VertexCount();
 
-	if (currentSubdivLevel != activeSubdivLevel || origNumPts != curNumPts) {
+	if (origNumPts != curNumPts) {
 		updateOriginalPointPositions();
 
 		return true;
